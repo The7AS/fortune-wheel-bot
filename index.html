@@ -262,7 +262,6 @@
             border-style: solid;
         }
 
-        /* Топ игроков */
         .leaderboard {
             background: var(--surface);
             border-radius: var(--radius);
@@ -311,7 +310,6 @@
             font-weight: 600;
         }
 
-        /* Размытие только фона при вращении */
         body.spinning .top-bar,
         body.spinning .options-panel,
         body.spinning .leaderboard {
@@ -319,7 +317,6 @@
             pointer-events: none;
         }
 
-        /* Результат */
         .result-overlay {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: rgba(0,0,0,0.75); display: flex; justify-content: center; align-items: center;
@@ -327,10 +324,10 @@
         }
         .result-overlay.active { opacity: 1; pointer-events: auto; }
         .result-content {
-            background: var(--surface); padding: 40px 40px; border-radius: 30px;
+            background: var(--surface); padding: 40px 30px; border-radius: 30px;
             text-align: center; transform: scale(0.8); transition: 0.3s;
             width: 90%;
-            max-width: 350px;
+            max-width: 360px;
         }
         .result-overlay.active .result-content { transform: scale(1); }
         .result-text {
@@ -340,7 +337,6 @@
             display: block;
             margin: 15px 0 25px;
         }
-
         .modal {
             display: flex; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: rgba(0,0,0,0.7); justify-content: center; align-items: center;
@@ -422,6 +418,7 @@
         <div class="result-content">
             <h2 style="margin-top:0;">🎉 Поздравляем, Ваш результат:</h2>
             <span class="result-text" id="resultText"></span>
+            <button id="shareResultBtn" style="display:block; margin: 0 auto 15px; background: #4caf50; color: white; border: none; padding: 12px 30px; border-radius: 30px; font-size: 1rem; cursor: pointer;">📤 Поделиться</button>
             <button id="closeResultBtn" style="display:block; margin: 0 auto; background: var(--accent); color: white; border: none; padding: 12px 30px; border-radius: 30px; font-size: 1rem; cursor: pointer;">Закрыть</button>
         </div>
     </div>
@@ -573,67 +570,105 @@
         const centerY = canvas.height / 2;
         const radius = Math.min(centerX, centerY) - 20;
 
-        let numSegments = options.length;
-        if (numSegments < 2) {
-            numSegments = MIN_SEGMENTS;
-        } else {
-            numSegments = Math.max(numSegments, 2);
-        }
-
-        const sliceAngle = (2 * Math.PI) / numSegments;
-        const segments = [];
-        for (let i = 0; i < numSegments; i++) {
-            if (i < options.length) {
-                segments.push({ label: options[i].label || '?', weight: useWeights ? options[i].weight : 1 });
-            } else {
-                segments.push({ label: '?', weight: 1, empty: true });
+        if (options.length < 2) {
+            // Холостое колесо с 8 секторами
+            const numSegments = MIN_SEGMENTS;
+            const sliceAngle = (2 * Math.PI) / numSegments;
+            for (let i = 0; i < numSegments; i++) {
+                const startAngle = currentAngle + i * sliceAngle;
+                const endAngle = startAngle + sliceAngle;
+                ctx.beginPath();
+                ctx.moveTo(centerX, centerY);
+                ctx.arc(centerX, centerY, radius, startAngle, endAngle);
+                ctx.closePath();
+                ctx.fillStyle = sectorGradient(centerX, centerY, radius, startAngle, endAngle, baseColors[i]);
+                ctx.fill();
+                ctx.strokeStyle = '#ffffff33';
+                ctx.lineWidth = 1;
+                ctx.stroke();
+                // Текст "?"
+                ctx.save();
+                ctx.translate(centerX, centerY);
+                ctx.rotate(startAngle + sliceAngle / 2);
+                ctx.textAlign = "center";
+                ctx.fillStyle = "#ffffff";
+                ctx.font = "bold 16px 'Segoe UI'";
+                ctx.shadowColor = '#00000080';
+                ctx.shadowBlur = 4;
+                ctx.fillText('?', radius * 0.7, 6);
+                ctx.shadowColor = 'transparent';
+                ctx.shadowBlur = 0;
+                ctx.restore();
             }
-        }
+            // Колышки
+            const pegRadius = 6;
+            const pegDistance = radius + 4;
+            ctx.fillStyle = '#ffffff';
+            ctx.strokeStyle = '#aaaaaa';
+            for (let i = 0; i < numSegments; i++) {
+                const angle = currentAngle + i * sliceAngle + sliceAngle / 2;
+                const pegX = centerX + pegDistance * Math.cos(angle);
+                const pegY = centerY + pegDistance * Math.sin(angle);
+                ctx.beginPath();
+                ctx.arc(pegX, pegY, pegRadius, 0, 2 * Math.PI);
+                ctx.fill();
+                ctx.stroke();
+            }
+        } else {
+            // Активное колесо с весами
+            const totalWeight = options.reduce((sum, opt) => sum + (useWeights ? opt.weight : 1), 0);
+            let startAngle = currentAngle;
 
-        let startAngle = currentAngle;
-        const step = sliceAngle;
-        segments.forEach((seg, i) => {
-            const endAngle = startAngle + step;
-            ctx.beginPath();
-            ctx.moveTo(centerX, centerY);
-            ctx.arc(centerX, centerY, radius, startAngle, endAngle);
-            ctx.closePath();
-            const baseColor = seg.empty ? '#2a2a3a' : baseColors[i % baseColors.length];
-            ctx.fillStyle = sectorGradient(centerX, centerY, radius, startAngle, endAngle, baseColor);
-            ctx.fill();
-            ctx.strokeStyle = '#ffffff33';
-            ctx.lineWidth = 1;
-            ctx.stroke();
+            options.forEach((opt, i) => {
+                const weight = useWeights ? opt.weight : 1;
+                const sliceAngle = (2 * Math.PI) * (weight / totalWeight);
+                const endAngle = startAngle + sliceAngle;
 
-            ctx.save();
-            ctx.translate(centerX, centerY);
-            ctx.rotate(startAngle + step / 2);
-            ctx.textAlign = "center";
-            ctx.fillStyle = "#ffffff";
-            ctx.font = "bold 16px 'Segoe UI'";
-            ctx.shadowColor = '#00000080';
-            ctx.shadowBlur = 4;
-            ctx.fillText(seg.label, radius * 0.7, 6);
-            ctx.shadowColor = 'transparent';
-            ctx.shadowBlur = 0;
-            ctx.restore();
+                ctx.beginPath();
+                ctx.moveTo(centerX, centerY);
+                ctx.arc(centerX, centerY, radius, startAngle, endAngle);
+                ctx.closePath();
+                const baseColor = baseColors[i % baseColors.length];
+                ctx.fillStyle = sectorGradient(centerX, centerY, radius, startAngle, endAngle, baseColor);
+                ctx.fill();
+                ctx.strokeStyle = '#ffffff33';
+                ctx.lineWidth = 1;
+                ctx.stroke();
 
-            startAngle = endAngle;
-        });
+                ctx.save();
+                ctx.translate(centerX, centerY);
+                ctx.rotate(startAngle + sliceAngle / 2);
+                ctx.textAlign = "center";
+                ctx.fillStyle = "#ffffff";
+                ctx.font = "bold 16px 'Segoe UI'";
+                ctx.shadowColor = '#00000080';
+                ctx.shadowBlur = 4;
+                ctx.fillText(opt.label || '?', radius * 0.7, 6);
+                ctx.shadowColor = 'transparent';
+                ctx.shadowBlur = 0;
+                ctx.restore();
 
-        // Стоп-палочки
-        const pegRadius = 6;
-        const pegDistance = radius + 4;
-        ctx.fillStyle = '#ffffff';
-        ctx.strokeStyle = '#aaaaaa';
-        for (let i = 0; i < numSegments; i++) {
-            const angle = currentAngle + i * step + step / 2;
-            const pegX = centerX + pegDistance * Math.cos(angle);
-            const pegY = centerY + pegDistance * Math.sin(angle);
-            ctx.beginPath();
-            ctx.arc(pegX, pegY, pegRadius, 0, 2 * Math.PI);
-            ctx.fill();
-            ctx.stroke();
+                startAngle = endAngle;
+            });
+
+            // Колышки по центрам секторов
+            const pegRadius = 6;
+            const pegDistance = radius + 4;
+            ctx.fillStyle = '#ffffff';
+            ctx.strokeStyle = '#aaaaaa';
+            startAngle = currentAngle;
+            options.forEach((opt, i) => {
+                const weight = useWeights ? opt.weight : 1;
+                const sliceAngle = (2 * Math.PI) * (weight / totalWeight);
+                const pegAngle = startAngle + sliceAngle / 2;
+                const pegX = centerX + pegDistance * Math.cos(pegAngle);
+                const pegY = centerY + pegDistance * Math.sin(pegAngle);
+                ctx.beginPath();
+                ctx.arc(pegX, pegY, pegRadius, 0, 2 * Math.PI);
+                ctx.fill();
+                ctx.stroke();
+                startAngle += sliceAngle;
+            });
         }
 
         // Центральная втулка
@@ -647,7 +682,7 @@
     }
 
     function idleSpin() {
-        if (options.length === 0) {
+        if (options.length < 2) {
             currentAngle += 0.02;
             drawWheel();
             animationFrameId = requestAnimationFrame(idleSpin);
@@ -682,16 +717,23 @@
 
             let result = '?';
             if (options.length > 0) {
-                const segAngle = 2 * Math.PI / numSegments;
-                let rawAngle = ((currentAngle % (2 * Math.PI)) + 2 * Math.PI) % (2 * Math.PI);
-                const index = Math.floor(rawAngle / segAngle) % numSegments;
-                if (index < options.length) {
-                    result = options[index].label || 'Пусто';
-                } else {
-                    result = 'Пустой сектор';
+                const totalWeight = options.reduce((sum, opt) => sum + (useWeights ? opt.weight : 1), 0);
+                let randomAngle = ((currentAngle % (2 * Math.PI)) + 2 * Math.PI) % (2 * Math.PI);
+                // Ищем сектор
+                let accumulated = 0;
+                for (let i = 0; i < options.length; i++) {
+                    const weight = useWeights ? options[i].weight : 1;
+                    const slice = (2 * Math.PI) * (weight / totalWeight);
+                    if (randomAngle >= accumulated && randomAngle < accumulated + slice) {
+                        result = options[i].label || 'Пусто';
+                        break;
+                    }
+                    accumulated += slice;
                 }
+                if (result === '?') result = options[options.length-1]?.label || 'Пусто';
             }
 
+            playWinSound();
             document.getElementById('resultText').textContent = result;
             document.getElementById('resultOverlay').classList.add('active');
 
@@ -730,6 +772,19 @@
         gain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + 0.05);
         osc.start(); osc.stop(audioCtx.currentTime + 0.05);
     }
+    function playWinSound() {
+        if (!audioCtx || muted) return;
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.connect(gain); gain.connect(audioCtx.destination);
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(1200, audioCtx.currentTime);
+        osc.frequency.exponentialRampToValueAtTime(800, audioCtx.currentTime + 0.15);
+        gain.gain.setValueAtTime(globalVolume * 0.3, audioCtx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.2);
+        osc.start(audioCtx.currentTime);
+        osc.stop(audioCtx.currentTime + 0.2);
+    }
 
     // Панель опций
     const optionsListDiv = document.getElementById('optionsList');
@@ -761,7 +816,7 @@
             row.appendChild(del);
             optionsListDiv.appendChild(row);
         });
-        if (options.length === 0 && !idleAnimationId) idleSpin();
+        if (options.length < 2 && !animationFrameId) idleSpin();
         updateSpinButtonState();
         drawWheel();
     }
@@ -776,9 +831,14 @@
     });
     spinBtn.addEventListener('click', startSpin);
 
-    // Закрыть результат
+    // Кнопки результата
     document.getElementById('closeResultBtn').addEventListener('click', () => {
         document.getElementById('resultOverlay').classList.remove('active');
+    });
+    document.getElementById('shareResultBtn').addEventListener('click', () => {
+        const resultText = document.getElementById('resultText').textContent;
+        const url = `https://t.me/share/url?url=&text=${encodeURIComponent('🎉 Мне выпало: ' + resultText)}`;
+        tg.openTelegramLink(url);
     });
 
     // Звук
