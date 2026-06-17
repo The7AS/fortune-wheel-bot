@@ -8,7 +8,6 @@
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
-        /* все стили без изменений, кроме .result-content (добавлен отступ для кнопки) */
         :root {
             --bg: #1a1a2e;
             --surface: #16213e;
@@ -51,6 +50,7 @@
             align-items: center;
             gap: 10px;
             flex-wrap: wrap;
+            transition: filter 0.3s;
         }
         .slogan {
             font-size: 1.4rem;
@@ -114,10 +114,6 @@
             flex-direction: column;
             gap: 20px;
         }
-        body.spinning .main-container {
-            filter: blur(6px);
-            pointer-events: none;
-        }
         .wheel-wrapper {
             display: flex;
             flex-direction: column;
@@ -128,7 +124,8 @@
             width: 100%;
             max-width: 400px;
             aspect-ratio: 1 / 1;
-            transition: transform 0.4s;
+            transition: transform 0.4s, filter 0.3s;
+            z-index: 1;
         }
         body.spinning .wheel-container {
             transform: scale(1.35);
@@ -183,6 +180,7 @@
             border-radius: var(--radius);
             padding: 20px;
             box-shadow: var(--shadow);
+            transition: filter 0.3s;
         }
         .chance-toggle {
             display: flex;
@@ -270,6 +268,7 @@
             border-radius: var(--radius);
             padding: 15px;
             box-shadow: var(--shadow);
+            transition: filter 0.3s;
         }
         .leaderboard h2 {
             text-align: center;
@@ -310,6 +309,14 @@
             font-size: 0.75rem;
             color: var(--accent);
             font-weight: 600;
+        }
+
+        /* Размытие только фона при вращении */
+        body.spinning .top-bar,
+        body.spinning .options-panel,
+        body.spinning .leaderboard {
+            filter: blur(6px);
+            pointer-events: none;
         }
 
         /* Результат */
@@ -685,7 +692,6 @@
                 }
             }
 
-            // Показываем результат
             document.getElementById('resultText').textContent = result;
             document.getElementById('resultOverlay').classList.add('active');
 
