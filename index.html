@@ -9,6 +9,7 @@
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
+        /* Все стили без изменений, оставлены как в предыдущей версии */
         :root {
             --bg: #1a1a2e;
             --surface: #16213e;
@@ -272,21 +273,23 @@
             </div>
         </div>
     </div>
+
 <script>
     // Telegram Mini App инициализация
     const tg = window.Telegram.WebApp;
     tg.ready();
     tg.expand();
 
-    // Firebase конфигурация (замените на свои данные)
+    // Firebase конфигурация (ваши данные)
     const firebaseConfig = {
-        apiKey: "YOUR_API_KEY",
-        authDomain: "YOUR_PROJECT.firebaseapp.com",
-        databaseURL: "https://YOUR_PROJECT.firebaseio.com",
-        projectId: "YOUR_PROJECT_ID",
-        storageBucket: "YOUR_PROJECT.appspot.com",
-        messagingSenderId: "YOUR_SENDER_ID",
-        appId: "YOUR_APP_ID"
+        apiKey: "AIzaSyBG_pWCBwZZn0q5uq2qo7OyL1gE8Wy-ipw",
+        authDomain: "fortunef3s-bot.firebaseapp.com",
+        databaseURL: "https://fortunef3s-bot-default-rtdb.europe-west1.firebasedatabase.app",
+        projectId: "fortunef3s-bot",
+        storageBucket: "fortunef3s-bot.firebasestorage.app",
+        messagingSenderId: "346933796337",
+        appId: "1:346933796337:web:75264443e0c3de75273850",
+        measurementId: "G-BXX0HZY4HY"  // measurementId не обязателен, но не мешает
     };
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
@@ -332,7 +335,6 @@
             loadLeaderboard();
         });
     } else {
-        // Если запущено вне Telegram, показываем кнопку входа через виджет (для разработки)
         document.body.innerHTML += '<div style="position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:var(--surface);padding:20px;border-radius:20px;">Запустите из Telegram</div>';
     }
 
@@ -355,7 +357,7 @@
         });
     }
 
-    // Колесо фортуны (ваш предыдущий код)
+    // Колесо фортуны
     const canvas = document.getElementById('wheelCanvas');
     const spinBtn = document.getElementById('spinButton');
     const pinElement = document.getElementById('pin');
