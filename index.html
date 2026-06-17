@@ -262,7 +262,7 @@
             border-style: solid;
         }
 
-        /* Топ игроков */
+        /* Лидерборд с вкладками */
         .leaderboard {
             background: var(--surface);
             border-radius: var(--radius);
@@ -270,45 +270,89 @@
             box-shadow: var(--shadow);
             transition: filter 0.3s;
         }
-        .leaderboard h2 {
-            text-align: center;
-            margin-bottom: 10px;
-            font-size: 1.2rem;
-            color: var(--accent);
-        }
-        .top-scroll {
+        .tab-switch {
+            position: relative;
             display: flex;
-            gap: 15px;
-            overflow-x: auto;
-            padding: 10px 0;
+            background: var(--input-bg);
+            border-radius: 12px;
+            padding: 4px;
+            margin-bottom: 15px;
+        }
+        .tab-option {
+            flex: 1;
+            text-align: center;
+            padding: 8px 12px;
+            font-weight: 600;
+            font-size: 0.95rem;
+            color: var(--muted-text);
+            cursor: pointer;
+            z-index: 1;
+            transition: color 0.3s;
+            user-select: none;
+        }
+        .tab-option.active {
+            color: var(--text);
+        }
+        .tab-background {
+            position: absolute;
+            top: 4px; bottom: 4px; left: 4px;
+            width: calc(50% - 4px);
+            background: var(--accent);
+            border-radius: 10px;
+            transition: transform 0.3s cubic-bezier(0.2, 0.8, 0.3, 1);
+        }
+        .tab-switch.friends .tab-background {
+            transform: translateX(100%);
+        }
+
+        .leaderboard-list {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
         }
         .top-player {
             display: flex;
-            flex-direction: column;
             align-items: center;
-            gap: 5px;
-            min-width: 70px;
+            gap: 12px;
+            padding: 8px 10px;
+            background: var(--input-bg);
+            border-radius: 14px;
+            transition: background 0.2s;
+        }
+        .top-player:hover { background: rgba(255,255,255,0.05); }
+        .position {
+            width: 24px;
+            text-align: center;
+            font-weight: 700;
+            color: var(--accent);
         }
         .top-player img {
-            width: 48px;
-            height: 48px;
+            width: 36px; height: 36px;
             border-radius: 50%;
             border: 2px solid var(--accent);
-            background: var(--input-bg);
         }
-        .top-player .name {
-            font-size: 0.85rem;
-            font-weight: 600;
-            text-align: center;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            max-width: 70px;
+        .player-name {
+            flex: 1;
+            font-weight: 500;
         }
-        .top-player .spins {
-            font-size: 0.75rem;
+        .player-spins {
+            font-weight: 700;
             color: var(--accent);
+        }
+        .contact-prompt {
+            text-align: center;
+            padding: 20px;
+            color: var(--muted-text);
+        }
+        .contact-prompt button {
+            margin-top: 10px;
+            background: var(--accent);
+            color: white;
+            border: none;
+            padding: 10px 24px;
+            border-radius: 30px;
             font-weight: 600;
+            cursor: pointer;
         }
 
         /* Размытие только фона при вращении */
@@ -339,6 +383,12 @@
             color: var(--accent);
             display: block;
             margin: 15px 0 25px;
+        }
+        .result-buttons {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            margin-top: 10px;
         }
 
         .modal {
@@ -411,10 +461,12 @@
         </div>
 
         <div class="leaderboard">
-            <h2>🏆 Топ игроков</h2>
-            <div class="top-scroll" id="topListContainer">
-                <div class="top-player">Загрузка...</div>
+            <div class="tab-switch" id="tabSwitch">
+                <div class="tab-background"></div>
+                <div class="tab-option active" data-tab="world">Мир</div>
+                <div class="tab-option" data-tab="friends">Друзья</div>
             </div>
+            <div class="leaderboard-list" id="topListContainer"></div>
         </div>
     </div>
 
@@ -422,7 +474,7 @@
         <div class="result-content">
             <h2 style="margin-top:0;">🎉 Поздравляем, Ваш результат:</h2>
             <span class="result-text" id="resultText"></span>
-            <div style="display: flex; gap: 10px; justify-content: center; margin-top: 10px;">
+            <div class="result-buttons">
                 <button id="closeResultBtn" style="background: var(--accent); color: white; border: none; padding: 12px 30px; border-radius: 30px; font-size: 1rem; cursor: pointer;">Закрыть</button>
                 <button id="shareResultBtn" style="background: #4caf50; color: white; border: none; padding: 12px 30px; border-radius: 30px; font-size: 1rem; cursor: pointer;">📤 Поделиться</button>
             </div>
@@ -472,6 +524,11 @@
     }
 
     let currentUserTelegramId = null;
+    let currentUserData = null;
+    let allUsersData = [];
+    let friendIds = new Set();
+    let currentTab = 'world'; // 'world' или 'friends'
+
     const initData = tg.initDataUnsafe;
     if (initData && initData.user) {
         const user = initData.user;
@@ -502,53 +559,165 @@
                 db.ref('users/' + currentUserTelegramId).on('value', snap => {
                     const data = snap.val();
                     if (data) {
+                        currentUserData = data;
                         document.getElementById('userNickDisplay').textContent = data.nickname || data.firstName;
                         if (data.photoUrl) document.getElementById('userAvatar').src = data.photoUrl;
                     }
                 });
-                loadLeaderboard();
+                loadAllUsers();
             }).catch(err => console.warn(err));
         }
     }
 
-    function loadLeaderboard() {
+    // Загрузка всех пользователей для лидерборда
+    function loadAllUsers() {
         if (!db) return;
-        db.ref('users').orderByChild('spins').limitToLast(10).on('value', snap => {
-            const container = document.getElementById('topListContainer');
-            container.innerHTML = '';
-            if (!snap.exists()) {
-                container.innerHTML = '<div class="top-player">Нет данных</div>';
-                return;
+        db.ref('users').orderByChild('spins').limitToLast(50).on('value', snap => {
+            allUsersData = [];
+            if (snap.exists()) {
+                snap.forEach(child => allUsersData.push({ id: child.key, ...child.val() }));
             }
-            const users = [];
-            snap.forEach(child => users.push({ id: child.key, ...child.val() }));
-            users.sort((a, b) => b.spins - a.spins);
-            users.forEach(u => {
-                const div = document.createElement('div');
-                div.className = 'top-player';
-                const img = document.createElement('img');
-                img.src = u.photoUrl || 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32"%3E%3Ccircle cx="16" cy="16" r="16" fill="%23e94560"/%3E%3C/svg%3E';
-                img.alt = u.nickname || u.firstName;
-                const name = document.createElement('span');
-                name.className = 'name';
-                name.textContent = u.nickname || u.firstName;
-                const spins = document.createElement('span');
-                spins.className = 'spins';
-                spins.textContent = '🔄 ' + (u.spins || 0);
-                div.appendChild(img);
-                div.appendChild(name);
-                div.appendChild(spins);
-                container.appendChild(div);
-            });
+            allUsersData.sort((a, b) => b.spins - a.spins);
+            renderLeaderboard();
         });
     }
+
+    // Получение контактов Telegram
+    function fetchContacts(callback) {
+        if (typeof tg.getContacts === 'function') {
+            tg.getContacts((contacts) => {
+                if (contacts && Array.isArray(contacts)) {
+                    friendIds.clear();
+                    contacts.forEach(c => friendIds.add(c.id.toString()));
+                    callback(true);
+                } else {
+                    callback(false);
+                }
+            });
+        } else {
+            // Попытка запросить контакт (один) – не будем, просто сообщаем о недоступности
+            callback(false);
+        }
+    }
+
+    // Рендеринг лидерборда в зависимости от активной вкладки
+    function renderLeaderboard() {
+        const container = document.getElementById('topListContainer');
+        container.innerHTML = '';
+
+        if (currentTab === 'world') {
+            renderWorldTab(container);
+        } else {
+            renderFriendsTab(container);
+        }
+    }
+
+    function renderWorldTab(container) {
+        if (allUsersData.length === 0) {
+            container.innerHTML = '<div class="contact-prompt">Пока нет игроков</div>';
+            return;
+        }
+        allUsersData.slice(0, 10).forEach((u, i) => {
+            container.appendChild(createPlayerElement(u, i + 1));
+        });
+    }
+
+    function renderFriendsTab(container) {
+        if (friendIds.size === 0) {
+            container.innerHTML = `
+                <div class="contact-prompt">
+                    Чтобы увидеть друзей, разрешите доступ к контактам Telegram.
+                    <br><br>
+                    <button onclick="requestContacts()">Разрешить доступ</button>
+                </div>`;
+            return;
+        }
+
+        const friends = allUsersData.filter(u => friendIds.has(u.telegramId));
+        if (friends.length === 0) {
+            container.innerHTML = '<div class="contact-prompt">Ваши друзья ещё не играли</div>';
+            return;
+        }
+        friends.slice(0, 10).forEach((u, i) => {
+            container.appendChild(createPlayerElement(u, i + 1));
+        });
+    }
+
+    function createPlayerElement(u, position) {
+        const div = document.createElement('div');
+        div.className = 'top-player';
+
+        const posSpan = document.createElement('span');
+        posSpan.className = 'position';
+        posSpan.textContent = position;
+        div.appendChild(posSpan);
+
+        const img = document.createElement('img');
+        img.src = u.photoUrl || 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32"%3E%3Ccircle cx="16" cy="16" r="16" fill="%23e94560"/%3E%3C/svg%3E';
+        img.alt = u.nickname || u.firstName;
+        div.appendChild(img);
+
+        const nameSpan = document.createElement('span');
+        nameSpan.className = 'player-name';
+        nameSpan.textContent = u.nickname || u.firstName;
+        div.appendChild(nameSpan);
+
+        const spinsSpan = document.createElement('span');
+        spinsSpan.className = 'player-spins';
+        spinsSpan.textContent = '🔄 ' + (u.spins || 0);
+        div.appendChild(spinsSpan);
+
+        return div;
+    }
+
+    // Запрос контактов при нажатии кнопки
+    window.requestContacts = function() {
+        fetchContacts((success) => {
+            if (success) {
+                renderLeaderboard();
+            } else {
+                const container = document.getElementById('topListContainer');
+                container.innerHTML = '<div class="contact-prompt">Не удалось получить контакты. Убедитесь, что вы дали разрешение в настройках Telegram.</div>';
+            }
+        });
+    };
+
+    // Переключение вкладок
+    const tabSwitch = document.getElementById('tabSwitch');
+    const tabOptions = document.querySelectorAll('.tab-option');
+    tabOptions.forEach(option => {
+        option.addEventListener('click', () => {
+            const tab = option.dataset.tab;
+            if (tab === currentTab) return;
+            currentTab = tab;
+            tabOptions.forEach(opt => opt.classList.remove('active'));
+            option.classList.add('active');
+            if (tab === 'friends') {
+                tabSwitch.classList.add('friends');
+                if (friendIds.size === 0) {
+                    fetchContacts((success) => {
+                        if (!success) {
+                            renderLeaderboard();
+                        } else {
+                            renderLeaderboard();
+                        }
+                    });
+                } else {
+                    renderLeaderboard();
+                }
+            } else {
+                tabSwitch.classList.remove('friends');
+                renderLeaderboard();
+            }
+        });
+    });
 
     // ----- КОЛЕСО ФОРТУНЫ -----
     const canvas = document.getElementById('wheelCanvas');
     const ctx = canvas.getContext('2d');
     const spinBtn = document.getElementById('spinButton');
     const pinElement = document.getElementById('pin');
-    let options = [];            // { label, weight }
+    let options = [];
     let useWeights = false;
     let isSpinning = false;
     let currentAngle = 0;
@@ -577,7 +746,6 @@
         const radius = Math.min(centerX, centerY) - 20;
 
         if (options.length < 2) {
-            // Холостое колесо (8 равных секторов)
             const numSegments = MIN_SEGMENTS;
             const sliceAngle = (2 * Math.PI) / numSegments;
             for (let i = 0; i < numSegments; i++) {
@@ -594,7 +762,7 @@
                 ctx.lineWidth = 1;
                 ctx.stroke();
             }
-            // Палочки
+            // палочки
             const pegRadius = 6;
             const pegDistance = radius + 4;
             ctx.fillStyle = '#ffffff';
@@ -643,7 +811,6 @@
                 startAngle = endAngle;
             });
 
-            // Палочки (расположены в центрах секторов)
             const pegRadius = 6;
             const pegDistance = radius + 4;
             ctx.fillStyle = '#ffffff';
@@ -724,7 +891,6 @@
 
             let result = '?';
             if (options.length > 0) {
-                // Для корректного определения выигрыша при неравных секторах используем ту же логику весов
                 const totalWeight = options.reduce((sum, opt) => sum + (useWeights ? opt.weight : 1), 0);
                 let rawAngle = ((currentAngle % (2 * Math.PI)) + 2 * Math.PI) % (2 * Math.PI);
                 let accumulated = 0;
@@ -744,7 +910,6 @@
             document.getElementById('resultOverlay').classList.add('active');
             playWinSound();
 
-            // Сохраняем результат для шаринга
             document.getElementById('shareResultBtn').onclick = () => {
                 const shareText = `🎉 Мне выпало: ${result}\nПопробуй и ты: @Fortunef3sBot`;
                 tg.openTelegramLink(`https://t.me/share/url?url=&text=${encodeURIComponent(shareText)}`);
@@ -831,7 +996,6 @@
     });
     spinBtn.addEventListener('click', startSpin);
 
-    // Закрыть результат
     document.getElementById('closeResultBtn').addEventListener('click', () => {
         document.getElementById('resultOverlay').classList.remove('active');
     });
