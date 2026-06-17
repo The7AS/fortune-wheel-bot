@@ -8,6 +8,7 @@
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
+        /* все стили без изменений, кроме .result-content (добавлен отступ для кнопки) */
         :root {
             --bg: #1a1a2e;
             --surface: #16213e;
@@ -263,7 +264,7 @@
             border-style: solid;
         }
 
-        /* Топ игроков — горизонтальная прокрутка */
+        /* Топ игроков */
         .leaderboard {
             background: var(--surface);
             border-radius: var(--radius);
@@ -311,6 +312,7 @@
             font-weight: 600;
         }
 
+        /* Результат */
         .result-overlay {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: rgba(0,0,0,0.75); display: flex; justify-content: center; align-items: center;
@@ -320,9 +322,18 @@
         .result-content {
             background: var(--surface); padding: 40px 40px; border-radius: 30px;
             text-align: center; transform: scale(0.8); transition: 0.3s;
+            width: 90%;
+            max-width: 350px;
         }
         .result-overlay.active .result-content { transform: scale(1); }
-        .result-text { font-size: 2.5rem; font-weight: 700; color: var(--accent); }
+        .result-text {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: var(--accent);
+            display: block;
+            margin: 15px 0 25px;
+        }
+
         .modal {
             display: flex; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: rgba(0,0,0,0.7); justify-content: center; align-items: center;
@@ -402,8 +413,9 @@
 
     <div class="result-overlay" id="resultOverlay">
         <div class="result-content">
+            <h2 style="margin-top:0;">🎉 Поздравляем, Ваш результат:</h2>
             <span class="result-text" id="resultText"></span>
-            <p style="margin-top:20px; color: var(--muted-text);">Нажмите Esc или кликните, чтобы закрыть</p>
+            <button id="closeResultBtn" style="display:block; margin: 0 auto; background: var(--accent); color: white; border: none; padding: 12px 30px; border-radius: 30px; font-size: 1rem; cursor: pointer;">Закрыть</button>
         </div>
     </div>
 
@@ -507,7 +519,6 @@
                 const img = document.createElement('img');
                 img.src = u.photoUrl || 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32"%3E%3Ccircle cx="16" cy="16" r="16" fill="%23e94560"/%3E%3C/svg%3E';
                 img.alt = u.nickname || u.firstName;
-                img.onerror = function() { this.src = 'data:image/svg+xml,...'; }; // fallback
                 const name = document.createElement('span');
                 name.className = 'name';
                 name.textContent = u.nickname || u.firstName;
@@ -674,9 +685,9 @@
                 }
             }
 
-            const overlay = document.getElementById('resultOverlay');
-            document.getElementById('resultText').textContent = '🎉 ' + result;
-            overlay.classList.add('active');
+            // Показываем результат
+            document.getElementById('resultText').textContent = result;
+            document.getElementById('resultOverlay').classList.add('active');
 
             if (db && options.length >= 2 && currentUserTelegramId) {
                 db.ref('users/' + currentUserTelegramId).transaction(user => {
@@ -758,6 +769,11 @@
         renderOptions();
     });
     spinBtn.addEventListener('click', startSpin);
+
+    // Закрыть результат
+    document.getElementById('closeResultBtn').addEventListener('click', () => {
+        document.getElementById('resultOverlay').classList.remove('active');
+    });
 
     // Звук
     let audioCtx = null, muted = false, globalVolume = 0.5;
