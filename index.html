@@ -1,0 +1,540 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Колесо фортуны</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/winwheel/3.0.1/winwheel.min.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <style>
+        :root {
+            --bg: #1a1a2e;
+            --surface: #16213e;
+            --text: #eee;
+            --accent: #e94560;
+            --input-bg: #0f3460;
+            --border: #0f3460;
+            --muted-text: #aaa;
+            --transition-speed: 0.3s;
+        }
+        body.light-theme {
+            --bg: #f0f2f5;
+            --surface: #ffffff;
+            --text: #222;
+            --accent: #c62828;
+            --input-bg: #e0e0e0;
+            --border: #ccc;
+            --muted-text: #555;
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px 20px 0;
+            transition: background var(--transition-speed), color var(--transition-speed);
+            position: relative;
+        }
+        .top-bar {
+            width: 100%;
+            max-width: 1400px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+            gap: 20px;
+        }
+        .slogan {
+            font-size: 2rem;
+            font-weight: 700;
+            letter-spacing: 1px;
+            color: var(--accent);
+            text-align: left;
+            flex: 1;
+        }
+        .right-group {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+        #localTime {
+            font-size: 1rem;
+            background: var(--surface);
+            padding: 6px 16px;
+            border-radius: 20px;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+        }
+        .theme-toggle {
+            background: none;
+            border: none;
+            font-size: 2rem;
+            cursor: pointer;
+            transition: transform 0.4s ease;
+            line-height: 1;
+        }
+        .theme-toggle[data-theme="dark"]:hover { transform: rotate(12deg); }
+        .theme-toggle[data-theme="dark"] { transform: rotate(0deg); }
+        .theme-toggle[data-theme="light"]:hover { transform: scale(1.2); }
+        .theme-toggle[data-theme="light"] { transform: scale(1); }
+        .settings-btn {
+            background: none;
+            border: none;
+            color: var(--text);
+            font-size: 2rem;
+            cursor: pointer;
+            transition: transform 0.4s ease-out;
+        }
+        .settings-btn:hover {
+            transform: rotate(720deg);
+            transition: transform 1.2s cubic-bezier(.2,.8,.4,1);
+        }
+        .user-badge {
+            display: none;
+            align-items: center;
+            gap: 8px;
+            background: var(--surface);
+            padding: 6px 15px;
+            border-radius: 30px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+        }
+        .user-badge img {
+            width: 32px; height: 32px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 2px solid var(--accent);
+        }
+        .main-container {
+            display: grid;
+            grid-template-columns: 240px 1fr 320px;
+            gap: 30px;
+            width: 100%;
+            max-width: 1400px;
+            align-items: start;
+            margin-bottom: 30px;
+            transition: filter 0.3s;
+        }
+        body.spinning .main-container {
+            filter: blur(6px);
+            pointer-events: none;
+        }
+        .leaderboard {
+            background: var(--surface);
+            border-radius: 20px;
+            padding: 20px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+        }
+        .leaderboard h2 { text-align: center; margin-bottom: 15px; font-size: 1.4rem; color: var(--accent); }
+        .leaderboard ol { list-style: none; padding: 0; }
+        .leaderboard li { padding: 10px 8px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; font-size: 0.95rem; }
+        .leaderboard li:last-child { border-bottom: none; }
+        .nick { font-weight: bold; }
+        .spins { color: var(--accent); font-weight: 600; }
+        .wheel-wrapper {
+            display: flex; flex-direction: column; align-items: center; justify-content: center; position: relative;
+        }
+        .wheel-container {
+            position: relative; display: flex; align-items: center; justify-content: center;
+            transition: transform 0.4s cubic-bezier(0.2, 0.8, 0.3, 1);
+        }
+        body.spinning .wheel-container { transform: scale(1.4); z-index: 100; }
+        canvas#wheelCanvas { display: block; max-width: 100%; height: auto; filter: drop-shadow(0 10px 20px rgba(0,0,0,0.6)); }
+        .pin {
+            position: absolute; top: -30px; left: 50%; transform: translateX(-50%);
+            width: 28px; height: 36px; z-index: 10;
+            filter: drop-shadow(0 4px 6px rgba(0,0,0,0.5)); transition: transform 0.1s;
+        }
+        .pin svg { width: 100%; height: 100%; fill: var(--accent); }
+        .pin.bump { animation: pinBump 0.1s ease; }
+        @keyframes pinBump {
+            0% { transform: translateX(-50%) translateY(0); }
+            50% { transform: translateX(-50%) translateY(8px); }
+            100% { transform: translateX(-50%) translateY(0); }
+        }
+        .spin-btn {
+            margin-top: 30px; padding: 14px 50px; font-size: 1.3rem; font-weight: 700;
+            background: var(--accent); color: white; border: none; border-radius: 40px;
+            cursor: pointer; letter-spacing: 1px;
+            box-shadow: 0 8px 20px rgba(233,69,96,0.5);
+            transition: background 0.3s, transform 0.2s, filter 0.3s; z-index: 5;
+        }
+        .spin-btn:hover:not(:disabled) { filter: brightness(1.15); transform: scale(1.02); }
+        .spin-btn:disabled { background: #555; box-shadow: 0 4px 10px rgba(0,0,0,0.3); cursor: not-allowed; filter: none; }
+        .options-panel { background: var(--surface); border-radius: 20px; padding: 20px; box-shadow: 0 10px 25px rgba(0,0,0,0.5); }
+        .chance-toggle { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; }
+        .toggle-label { font-size: 1rem; font-weight: 500; }
+        .switch { position: relative; width: 54px; height: 28px; }
+        .switch input { display: none; }
+        .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: var(--accent); border-radius: 28px; transition: 0.3s; }
+        .slider:before { position: absolute; content: ""; height: 22px; width: 22px; left: 3px; bottom: 3px; background-color: white; border-radius: 50%; transition: 0.3s; }
+        input:checked + .slider { background-color: #4caf50; }
+        input:checked + .slider:before { transform: translateX(26px); }
+        .option-row { display: flex; align-items: center; gap: 8px; margin-bottom: 12px; }
+        .option-row input[type="text"] { flex: 1; min-width: 60px; padding: 10px 14px; border-radius: 10px; border: none; background: var(--input-bg); color: var(--text); font-size: 0.95rem; }
+        .weight-input { width: 60px; padding: 10px 6px; border-radius: 10px; border: none; background: var(--input-bg); color: #f5c518; text-align: center; font-weight: 600; }
+        .delete-option { background: var(--accent); border: none; color: white; width: 30px; height: 30px; border-radius: 50%; cursor: pointer; font-size: 1.3rem; display: flex; align-items: center; justify-content: center; transition: transform 0.2s; }
+        .delete-option:hover { transform: scale(1.15); }
+        .add-btn { width: 100%; padding: 12px; border: 2px dashed var(--accent); background: transparent; color: var(--accent); font-size: 2rem; border-radius: 14px; cursor: pointer; transition: all 0.3s; margin-top: 8px; display: flex; align-items: center; justify-content: center; }
+        .add-btn:hover { background: rgba(233,69,96,0.1); transform: scale(1.03); border-style: solid; }
+        .result-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.75); display: flex; justify-content: center; align-items: center; z-index: 300; opacity: 0; pointer-events: none; transition: opacity 0.3s ease; }
+        .result-overlay.active { opacity: 1; pointer-events: auto; }
+        .result-content { background: var(--surface); padding: 40px 60px; border-radius: 30px; box-shadow: 0 20px 40px rgba(0,0,0,0.8); transform: scale(0.8); transition: transform 0.3s ease; text-align: center; }
+        .result-overlay.active .result-content { transform: scale(1); }
+        .result-text { font-size: 3rem; font-weight: 700; color: var(--accent); display: block; }
+        .modal { display: flex; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); justify-content: center; align-items: center; z-index: 200; opacity: 0; pointer-events: none; transition: opacity 0.25s ease; }
+        .modal.active { opacity: 1; pointer-events: auto; }
+        .modal-content { background: var(--surface); padding: 30px; border-radius: 24px; width: 380px; box-shadow: 0 20px 40px rgba(0,0,0,0.6); transform: scale(0.9); transition: transform 0.25s ease; color: var(--text); }
+        .modal.active .modal-content { transform: scale(1); }
+        .modal-content h2 { margin-bottom: 20px; font-size: 1.6rem; }
+        .modal-content label { display: block; margin-bottom: 8px; font-weight: 500; }
+        .modal-content input[type="text"], .modal-content input[type="range"] { width: 100%; padding: 10px; margin-bottom: 18px; border-radius: 10px; border: none; background: var(--input-bg); color: var(--text); }
+        .modal-content button { padding: 10px 24px; border: none; border-radius: 30px; cursor: pointer; background: var(--accent); color: white; font-weight: 600; margin-right: 10px; transition: background 0.2s; }
+        .volume-row { display: flex; align-items: center; gap: 12px; }
+        .volume-row input[type="range"] { flex: 1; }
+        @media (max-width: 1000px) {
+            .main-container { grid-template-columns: 1fr; gap: 20px; max-width: 500px; margin: 0 auto; }
+            .leaderboard { order: 2; }
+            .wheel-wrapper { order: 1; }
+            .options-panel { order: 3; }
+            .top-bar { flex-direction: column; align-items: flex-start; }
+            .slogan { font-size: 1.5rem; }
+        }
+    </style>
+</head>
+<body>
+    <div class="top-bar">
+        <div class="slogan" id="slogan">✨ Удача ждёт тебя!</div>
+        <div class="right-group">
+            <span id="localTime">00:00</span>
+            <button class="theme-toggle" id="themeToggle" data-theme="dark">🌙</button>
+            <div class="user-badge" id="userBadge">
+                <img id="userAvatar" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ccircle cx='16' cy='16' r='16' fill='%23e94560'/%3E%3C/svg%3E" alt="avatar">
+                <span id="userNickDisplay"></span>
+            </div>
+            <button class="settings-btn" id="openSettings">⚙️</button>
+        </div>
+    </div>
+    <div class="main-container">
+        <div class="leaderboard">
+            <h2>🏆 Топ игроков</h2>
+            <ol id="top-list"><li>Загрузка...</li></ol>
+        </div>
+        <div class="wheel-wrapper">
+            <div class="wheel-container" id="wheelContainer">
+                <canvas id="wheelCanvas" width="500" height="500"></canvas>
+                <div class="pin" id="pin">
+                    <svg viewBox="0 0 28 36" preserveAspectRatio="xMidYMid meet">
+                        <path d="M14 36 C22 24 28 14 28 10 C28 4.5 21.7 0 14 0 C6.3 0 0 4.5 0 10 C0 14 6 24 14 36Z" />
+                        <circle cx="14" cy="12" r="4.5" fill="white" />
+                        <circle cx="14" cy="12" r="2" fill="#e0e0e0" />
+                    </svg>
+                </div>
+            </div>
+            <button class="spin-btn" id="spinButton" disabled>🎡 Крутить!</button>
+        </div>
+        <div class="options-panel">
+            <div class="chance-toggle">
+                <span class="toggle-label">🎲 Шансы</span>
+                <label class="switch">
+                    <input type="checkbox" id="chanceSwitch">
+                    <span class="slider"></span>
+                </label>
+            </div>
+            <div id="optionsList"></div>
+            <button class="add-btn" id="addOptionBtn">+</button>
+        </div>
+    </div>
+    <div class="result-overlay" id="resultOverlay">
+        <div class="result-content">
+            <span class="result-text" id="resultText"></span>
+            <p style="margin-top: 20px; color: var(--muted-text);">Нажмите Esc или кликните, чтобы закрыть</p>
+        </div>
+    </div>
+    <div class="modal" id="settingsModal">
+        <div class="modal-content">
+            <h2>⚙️ Настройки</h2>
+            <label>Никнейм</label>
+            <input type="text" id="nicknameInput" placeholder="Твой ник...">
+            <label>🔊 Громкость</label>
+            <div class="volume-row">
+                <input type="range" id="volumeSlider" min="0" max="100" value="50">
+                <span id="volumeValue">50%</span>
+            </div>
+            <label><input type="checkbox" id="muteCheckbox"> 🔇 Без звука</label>
+            <div style="margin-top:24px;">
+                <button id="saveSettings">💾 Сохранить</button>
+                <button id="closeSettings">✖ Закрыть</button>
+            </div>
+        </div>
+    </div>
+<script>
+    // Telegram Mini App инициализация
+    const tg = window.Telegram.WebApp;
+    tg.ready();
+    tg.expand();
+
+    // Firebase конфигурация (замените на свои данные)
+    const firebaseConfig = {
+        apiKey: "YOUR_API_KEY",
+        authDomain: "YOUR_PROJECT.firebaseapp.com",
+        databaseURL: "https://YOUR_PROJECT.firebaseio.com",
+        projectId: "YOUR_PROJECT_ID",
+        storageBucket: "YOUR_PROJECT.appspot.com",
+        messagingSenderId: "YOUR_SENDER_ID",
+        appId: "YOUR_APP_ID"
+    };
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
+
+    let currentUserTelegramId = null;
+
+    // Инициализация пользователя из Telegram
+    const initData = tg.initDataUnsafe;
+    if (initData && initData.user) {
+        const user = initData.user;
+        currentUserTelegramId = user.id.toString();
+        const firstName = user.first_name || 'Пользователь';
+        const username = user.username || '';
+        const photoUrl = user.photo_url || '';
+
+        const userRef = db.ref('users/' + currentUserTelegramId);
+        userRef.once('value').then(snapshot => {
+            if (!snapshot.exists()) {
+                userRef.set({
+                    telegramId: currentUserTelegramId,
+                    firstName, username, photoUrl,
+                    nickname: firstName,
+                    spins: 0,
+                    createdAt: firebase.database.ServerValue.TIMESTAMP
+                });
+            } else {
+                userRef.update({ firstName, username, photoUrl });
+            }
+            // Отображаем данные пользователя
+            const badge = document.getElementById('userBadge');
+            badge.style.display = 'flex';
+            document.getElementById('userNickDisplay').textContent = firstName;
+            if (photoUrl) {
+                document.getElementById('userAvatar').src = photoUrl;
+            }
+            // Слушаем изменения ника
+            db.ref('users/' + currentUserTelegramId).on('value', snap => {
+                const data = snap.val();
+                if (data) {
+                    document.getElementById('userNickDisplay').textContent = data.nickname || data.firstName;
+                }
+            });
+            loadLeaderboard();
+        });
+    } else {
+        // Если запущено вне Telegram, показываем кнопку входа через виджет (для разработки)
+        document.body.innerHTML += '<div style="position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:var(--surface);padding:20px;border-radius:20px;">Запустите из Telegram</div>';
+    }
+
+    function loadLeaderboard() {
+        db.ref('users').orderByChild('spins').limitToLast(10).on('value', snapshot => {
+            const topList = document.getElementById('top-list');
+            topList.innerHTML = '';
+            if (!snapshot.exists()) {
+                topList.innerHTML = '<li>Нет данных</li>';
+                return;
+            }
+            const users = [];
+            snapshot.forEach(child => users.push({ id: child.key, ...child.val() }));
+            users.sort((a, b) => b.spins - a.spins);
+            users.forEach((u, i) => {
+                const li = document.createElement('li');
+                li.innerHTML = `<span class="nick">${i+1}. ${u.nickname || u.firstName}</span> <span class="spins">${u.spins}</span>`;
+                topList.appendChild(li);
+            });
+        });
+    }
+
+    // Колесо фортуны (ваш предыдущий код)
+    const canvas = document.getElementById('wheelCanvas');
+    const spinBtn = document.getElementById('spinButton');
+    const pinElement = document.getElementById('pin');
+    let theWheel = null, options = [], useWeights = false, isSpinning = false, idleAnimationId = null, lastAngle = 0;
+    const idleColors = ['#e94560','#0f3460','#f5c518','#16213e','#53d8a0','#a45ee9','#ff6b6b','#4ecdc4'];
+
+    function bumpPin() { pinElement.classList.add('bump'); setTimeout(() => pinElement.classList.remove('bump'), 100); }
+    function playTickSound() {
+        if (!audioCtx || muted) return;
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.connect(gain); gain.connect(audioCtx.destination);
+        osc.frequency.value = 800 + Math.random() * 200;
+        gain.gain.setValueAtTime(globalVolume * 0.2, audioCtx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + 0.05);
+        osc.start(); osc.stop(audioCtx.currentTime + 0.05);
+    }
+
+    function drawWheel() {
+        stopIdleSpin();
+        if (theWheel) { theWheel.stopAnimation(false); theWheel = null; }
+        if (options.length === 0) { startIdleSpin(); return; }
+        spinBtn.disabled = options.length < 2;
+        const segments = options.map((opt, i) => ({ fillStyle: idleColors[i % idleColors.length], text: opt.label, size: useWeights ? opt.weight : 1 }));
+        theWheel = new Winwheel({
+            canvasId: 'wheelCanvas', numSegments: segments.length, segments: segments,
+            animation: { type: 'spinToStop', duration: 5, spins: 8, callbackFinished: spinComplete },
+            textFontSize: 18, textFillStyle: '#ffffff', textFontWeight: 'bold', responsive: true, drawMode: 'code'
+        });
+    }
+
+    function startIdleSpin() {
+        if (idleAnimationId) return;
+        const segments = idleColors.map(color => ({ fillStyle: color, text: '' }));
+        theWheel = new Winwheel({
+            canvasId: 'wheelCanvas', numSegments: 8, segments: segments,
+            textFontSize: 16, drawMode: 'code', responsive: true, rotationAngle: lastAngle
+        });
+        let lastTime = performance.now();
+        const animate = (now) => {
+            const delta = now - lastTime; lastTime = now;
+            const speed = 0.03;
+            theWheel.rotationAngle += speed * delta; theWheel.draw();
+            const sectorSize = 360 / 8;
+            const currentAngle = theWheel.rotationAngle % 360;
+            const prevAngle = lastAngle % 360;
+            if (Math.floor(currentAngle / sectorSize) !== Math.floor(prevAngle / sectorSize)) { bumpPin(); playTickSound(); }
+            lastAngle = theWheel.rotationAngle;
+            idleAnimationId = requestAnimationFrame(animate);
+        };
+        idleAnimationId = requestAnimationFrame(animate);
+        spinBtn.disabled = true;
+    }
+
+    function stopIdleSpin() {
+        if (idleAnimationId) { cancelAnimationFrame(idleAnimationId); idleAnimationId = null; }
+        if (theWheel) { lastAngle = theWheel.rotationAngle; theWheel.stopAnimation(false); theWheel = null; }
+    }
+
+    function spinComplete(indicatedSegment) {
+        isSpinning = false;
+        document.body.classList.remove('spinning');
+        spinBtn.disabled = options.length < 2;
+        const resultOverlay = document.getElementById('resultOverlay');
+        resultOverlay.querySelector('#resultText').textContent = '🎉 ' + indicatedSegment.text;
+        resultOverlay.classList.add('active');
+        if (options.length >= 2 && currentUserTelegramId) {
+            db.ref('users/' + currentUserTelegramId).transaction(user => {
+                if (user) user.spins = (user.spins || 0) + 1;
+                return user;
+            });
+        }
+        drawWheel();
+    }
+
+    document.getElementById('resultOverlay').addEventListener('click', function(e) { if (e.target === this) this.classList.remove('active'); });
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') {
+            const overlay = document.getElementById('resultOverlay');
+            if (overlay.classList.contains('active') && !isSpinning) overlay.classList.remove('active');
+        }
+    });
+
+    function startSpinTicks() {
+        if (!theWheel) return;
+        const interval = setInterval(() => {
+            if (!isSpinning) { clearInterval(interval); return; }
+            const sectorSize = 360 / options.length;
+            const angle = theWheel.rotationAngle % 360;
+            const prevAngle = (lastAngle || angle) % 360;
+            if (Math.floor(angle / sectorSize) !== Math.floor(prevAngle / sectorSize)) { bumpPin(); playTickSound(); }
+            lastAngle = angle;
+        }, 20);
+    }
+
+    const optionsListDiv = document.getElementById('optionsList');
+    const chanceSwitch = document.getElementById('chanceSwitch');
+    function renderOptions() {
+        optionsListDiv.innerHTML = '';
+        options.forEach((opt, index) => {
+            const row = document.createElement('div'); row.className = 'option-row';
+            const textInput = document.createElement('input'); textInput.type = 'text'; textInput.value = opt.label; textInput.placeholder = 'Вариант ' + (index + 1);
+            textInput.addEventListener('input', (e) => { options[index].label = e.target.value; drawWheel(); });
+            row.appendChild(textInput);
+            if (useWeights) {
+                const weightInput = document.createElement('input'); weightInput.type = 'number'; weightInput.className = 'weight-input'; weightInput.value = opt.weight; weightInput.min = 1;
+                weightInput.addEventListener('input', (e) => { options[index].weight = parseInt(e.target.value) || 1; drawWheel(); });
+                row.appendChild(weightInput);
+            }
+            const deleteBtn = document.createElement('button'); deleteBtn.className = 'delete-option'; deleteBtn.innerHTML = '×';
+            deleteBtn.addEventListener('click', () => { options.splice(index, 1); renderOptions(); drawWheel(); });
+            row.appendChild(deleteBtn);
+            optionsListDiv.appendChild(row);
+        });
+        if (options.length === 0) startIdleSpin();
+    }
+    document.getElementById('addOptionBtn').addEventListener('click', () => { options.push({ label: '', weight: 1 }); renderOptions(); drawWheel(); });
+    chanceSwitch.addEventListener('change', (e) => { useWeights = e.target.checked; if (!useWeights) options.forEach(opt => opt.weight = 1); renderOptions(); drawWheel(); });
+    spinBtn.addEventListener('click', () => { if (isSpinning || options.length < 2) return; isSpinning = true; document.body.classList.add('spinning'); drawWheel(); theWheel.startAnimation(); startSpinTicks(); });
+
+    let audioCtx = null, muted = false, globalVolume = 0.5;
+    function initAudio() { if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)(); }
+    document.body.addEventListener('click', initAudio, { once: true });
+
+    const settingsModal = document.getElementById('settingsModal');
+    document.getElementById('openSettings').addEventListener('click', () => {
+        settingsModal.classList.add('active');
+        if (currentUserTelegramId) {
+            db.ref('users/' + currentUserTelegramId).once('value').then(snap => {
+                const data = snap.val(); if (data) document.getElementById('nicknameInput').value = data.nickname || '';
+            });
+        }
+        document.getElementById('volumeSlider').value = globalVolume * 100;
+        document.getElementById('volumeValue').textContent = Math.round(globalVolume * 100) + '%';
+        document.getElementById('muteCheckbox').checked = muted;
+    });
+    document.getElementById('closeSettings').addEventListener('click', () => settingsModal.classList.remove('active'));
+    document.getElementById('saveSettings').addEventListener('click', async () => {
+        if (!currentUserTelegramId) { alert('Сначала войдите через Telegram, чтобы изменить никнейм.'); return; }
+        const newNick = document.getElementById('nicknameInput').value.trim();
+        if (newNick) {
+            const snapshot = await db.ref('users').orderByChild('nickname').equalTo(newNick).once('value');
+            let unique = true;
+            snapshot.forEach(child => { if (child.key !== currentUserTelegramId) unique = false; });
+            if (!unique) { alert('Этот никнейм уже занят!'); return; }
+            await db.ref('users/' + currentUserTelegramId).update({ nickname: newNick });
+            document.getElementById('userNickDisplay').textContent = newNick;
+        }
+        globalVolume = parseInt(document.getElementById('volumeSlider').value) / 100;
+        muted = document.getElementById('muteCheckbox').checked;
+        localStorage.setItem('volume', globalVolume * 100);
+        localStorage.setItem('muted', muted ? '1' : '0');
+        settingsModal.classList.remove('active');
+    });
+    window.addEventListener('click', (e) => { if (e.target.classList.contains('modal')) e.target.classList.remove('active'); });
+
+    const themeToggle = document.getElementById('themeToggle');
+    function setTheme(isLight) {
+        document.body.classList.toggle('light-theme', isLight);
+        themeToggle.setAttribute('data-theme', isLight ? 'light' : 'dark');
+        themeToggle.textContent = isLight ? '☀️' : '🌙';
+        localStorage.setItem('theme', isLight ? 'light' : 'dark');
+    }
+    themeToggle.addEventListener('click', () => { const isLight = !document.body.classList.contains('light-theme'); setTheme(isLight); });
+    if (tg.themeParams) { setTheme(tg.themeParams.bg_color !== '#18222d'); }
+    tg.onEvent('themeChanged', () => { if (tg.themeParams) setTheme(tg.themeParams.bg_color !== '#18222d'); });
+
+    function updateTime() { document.getElementById('localTime').textContent = new Date().toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' }); }
+    setInterval(updateTime, 1000); updateTime();
+
+    const slogans = ["Крути судьбу смелее!","Твой выбор — твоя удача!","Вращай и побеждай!","Сегодня твой день!","Фортуна улыбается смелым!","Поверни колесо к успеху!","Шанс на миллион!","Реши, что важнее!","Пусть удача крутится с тобой!","Колесо решит всё!","Удача ждёт тебя!"];
+    document.getElementById('slogan').textContent = slogans[Math.floor(Math.random() * slogans.length)];
+
+    window.addEventListener('load', () => {
+        if (options.length === 0) { options.push({ label: '', weight: 1 }); options.push({ label: '', weight: 1 }); renderOptions(); }
+        drawWheel();
+        if (localStorage.getItem('volume')) globalVolume = parseInt(localStorage.getItem('volume')) / 100;
+        if (localStorage.getItem('muted') === '1') muted = true;
+    });
+</script>
+</body>
+</html>
