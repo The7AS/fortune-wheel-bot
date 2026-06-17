@@ -9,7 +9,7 @@
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
-        /* Все стили без изменений, оставлены как в предыдущей версии */
+        /* Стили оставлены без изменений */
         :root {
             --bg: #1a1a2e;
             --surface: #16213e;
@@ -223,7 +223,7 @@
     <div class="main-container">
         <div class="leaderboard">
             <h2>🏆 Топ игроков</h2>
-            <ol id="top-list"><li>Загрузка...</li></ol>
+            <ol id="top-list"><li>Нет данных (Firebase не настроен)</li></ol>
         </div>
         <div class="wheel-wrapper">
             <div class="wheel-container" id="wheelContainer">
@@ -275,26 +275,32 @@
     </div>
 
 <script>
-    // Telegram Mini App инициализация
+    // Telegram Mini App
     const tg = window.Telegram.WebApp;
     tg.ready();
-    tg.expand();
 
-    // Firebase конфигурация (ваши данные)
-    const firebaseConfig = {
-        apiKey: "AIzaSyBG_pWCBwZZn0q5uq2qo7OyL1gE8Wy-ipw",
-        authDomain: "fortunef3s-bot.firebaseapp.com",
-        databaseURL: "https://fortunef3s-bot-default-rtdb.europe-west1.firebasedatabase.app",
-        projectId: "fortunef3s-bot",
-        storageBucket: "fortunef3s-bot.firebasestorage.app",
-        messagingSenderId: "346933796337",
-        appId: "1:346933796337:web:75264443e0c3de75273850",
-        measurementId: "G-BXX0HZY4HY"  // measurementId не обязателен, но не мешает
-    };
-    firebase.initializeApp(firebaseConfig);
-    const db = firebase.database();
-
+    // Переменная для БД (если Firebase не инициализирован, останется null)
+    let db = null;
     let currentUserTelegramId = null;
+
+    // Безопасная инициализация Firebase
+    try {
+        const firebaseConfig = {
+            apiKey: "AIzaSyBG_pWCBwZZn0q5uq2qo7OyL1gE8Wy-ipw",
+            authDomain: "fortunef3s-bot.firebaseapp.com",
+            databaseURL: "https://fortunef3s-bot-default-rtdb.europe-west1.firebasedatabase.app",
+            projectId: "fortunef3s-bot",
+            storageBucket: "fortunef3s-bot.firebasestorage.app",
+            messagingSenderId: "346933796337",
+            appId: "1:346933796337:web:75264443e0c3de75273850"
+        };
+        firebase.initializeApp(firebaseConfig);
+        db = firebase.database();
+        console.log('Firebase инициализирован успешно');
+    } catch (error) {
+        console.warn('Firebase не инициализирован, работаем без базы данных:', error.message);
+        document.querySelector('.leaderboard h2').textContent = '🏆 Топ (офлайн)';
+    }
 
     // Инициализация пользователя из Telegram
     const initData = tg.initDataUnsafe;
@@ -305,40 +311,50 @@
         const username = user.username || '';
         const photoUrl = user.photo_url || '';
 
-        const userRef = db.ref('users/' + currentUserTelegramId);
-        userRef.once('value').then(snapshot => {
-            if (!snapshot.exists()) {
-                userRef.set({
-                    telegramId: currentUserTelegramId,
-                    firstName, username, photoUrl,
-                    nickname: firstName,
-                    spins: 0,
-                    createdAt: firebase.database.ServerValue.TIMESTAMP
-                });
-            } else {
-                userRef.update({ firstName, username, photoUrl });
-            }
-            // Отображаем данные пользователя
-            const badge = document.getElementById('userBadge');
-            badge.style.display = 'flex';
-            document.getElementById('userNickDisplay').textContent = firstName;
-            if (photoUrl) {
-                document.getElementById('userAvatar').src = photoUrl;
-            }
-            // Слушаем изменения ника
-            db.ref('users/' + currentUserTelegramId).on('value', snap => {
-                const data = snap.val();
-                if (data) {
-                    document.getElementById('userNickDisplay').textContent = data.nickname || data.firstName;
+        // Показываем бейдж пользователя
+        const badge = document.getElementById('userBadge');
+        badge.style.display = 'flex';
+        document.getElementById('userNickDisplay').textContent = firstName;
+        if (photoUrl) {
+            document.getElementById('userAvatar').src = photoUrl;
+        }
+
+        // Если есть база данных, сохраняем/обновляем пользователя
+        if (db) {
+            const userRef = db.ref('users/' + currentUserTelegramId);
+            userRef.once('value').then(snapshot => {
+                if (!snapshot.exists()) {
+                    userRef.set({
+                        telegramId: currentUserTelegramId,
+                        firstName, username, photoUrl,
+                        nickname: firstName,
+                        spins: 0,
+                        createdAt: firebase.database.ServerValue.TIMESTAMP
+                    });
+                } else {
+                    userRef.update({ firstName, username, photoUrl });
                 }
-            });
-            loadLeaderboard();
-        });
+                // Слушаем изменения ника
+                db.ref('users/' + currentUserTelegramId).on('value', snap => {
+                    const data = snap.val();
+                    if (data) {
+                        document.getElementById('userNickDisplay').textContent = data.nickname || data.firstName;
+                    }
+                });
+                loadLeaderboard();
+            }).catch(err => console.warn('Ошибка сохранения пользователя:', err));
+        }
     } else {
-        document.body.innerHTML += '<div style="position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:var(--surface);padding:20px;border-radius:20px;">Запустите из Telegram</div>';
+        // Не в Telegram – просто показываем колесо, но без авторизации
+        console.log('Приложение запущено вне Telegram');
     }
 
+    // Функция загрузки лидерборда
     function loadLeaderboard() {
+        if (!db) {
+            document.getElementById('top-list').innerHTML = '<li>Нет подключения к базе</li>';
+            return;
+        }
         db.ref('users').orderByChild('spins').limitToLast(10).on('value', snapshot => {
             const topList = document.getElementById('top-list');
             topList.innerHTML = '';
@@ -357,7 +373,7 @@
         });
     }
 
-    // Колесо фортуны
+    // ----- Колесо фортуны -----
     const canvas = document.getElementById('wheelCanvas');
     const spinBtn = document.getElementById('spinButton');
     const pinElement = document.getElementById('pin');
@@ -424,7 +440,7 @@
         const resultOverlay = document.getElementById('resultOverlay');
         resultOverlay.querySelector('#resultText').textContent = '🎉 ' + indicatedSegment.text;
         resultOverlay.classList.add('active');
-        if (options.length >= 2 && currentUserTelegramId) {
+        if (options.length >= 2 && db && currentUserTelegramId) {
             db.ref('users/' + currentUserTelegramId).transaction(user => {
                 if (user) user.spins = (user.spins || 0) + 1;
                 return user;
@@ -485,7 +501,7 @@
     const settingsModal = document.getElementById('settingsModal');
     document.getElementById('openSettings').addEventListener('click', () => {
         settingsModal.classList.add('active');
-        if (currentUserTelegramId) {
+        if (db && currentUserTelegramId) {
             db.ref('users/' + currentUserTelegramId).once('value').then(snap => {
                 const data = snap.val(); if (data) document.getElementById('nicknameInput').value = data.nickname || '';
             });
@@ -497,6 +513,7 @@
     document.getElementById('closeSettings').addEventListener('click', () => settingsModal.classList.remove('active'));
     document.getElementById('saveSettings').addEventListener('click', async () => {
         if (!currentUserTelegramId) { alert('Сначала войдите через Telegram, чтобы изменить никнейм.'); return; }
+        if (!db) { alert('База данных не подключена. Сохранение невозможно.'); return; }
         const newNick = document.getElementById('nicknameInput').value.trim();
         if (newNick) {
             const snapshot = await db.ref('users').orderByChild('nickname').equalTo(newNick).once('value');
@@ -531,6 +548,7 @@
     const slogans = ["Крути судьбу смелее!","Твой выбор — твоя удача!","Вращай и побеждай!","Сегодня твой день!","Фортуна улыбается смелым!","Поверни колесо к успеху!","Шанс на миллион!","Реши, что важнее!","Пусть удача крутится с тобой!","Колесо решит всё!","Удача ждёт тебя!"];
     document.getElementById('slogan').textContent = slogans[Math.floor(Math.random() * slogans.length)];
 
+    // Запуск колеса при загрузке
     window.addEventListener('load', () => {
         if (options.length === 0) { options.push({ label: '', weight: 1 }); options.push({ label: '', weight: 1 }); renderOptions(); }
         drawWheel();
