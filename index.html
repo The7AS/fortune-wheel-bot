@@ -16,6 +16,8 @@
             --input-bg: #0f3460;
             --border: #0f3460;
             --muted-text: #aaa;
+            --radius: 20px;
+            --shadow: 0 8px 20px rgba(0,0,0,0.5);
         }
         body.light-theme {
             --bg: #f0f2f5;
@@ -25,6 +27,7 @@
             --input-bg: #e0e0e0;
             --border: #ccc;
             --muted-text: #555;
+            --shadow: 0 8px 20px rgba(0,0,0,0.1);
         }
         * { box-sizing: border-box; margin: 0; padding: 0; }
         body {
@@ -35,54 +38,53 @@
             flex-direction: column;
             align-items: center;
             min-height: 100vh;
-            padding: 20px;
+            padding: 16px;
             transition: background 0.3s, color 0.3s;
+            gap: 20px;
         }
         .top-bar {
             width: 100%;
-            max-width: 1400px;
+            max-width: 500px;
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 30px;
-            gap: 20px;
+            gap: 10px;
+            flex-wrap: wrap;
         }
         .slogan {
-            font-size: 2rem;
+            font-size: 1.4rem;
             font-weight: 700;
             letter-spacing: 1px;
             color: var(--accent);
             flex: 1;
+            text-align: left;
         }
         .right-group {
             display: flex;
             align-items: center;
-            gap: 20px;
+            gap: 12px;
         }
         #localTime {
-            font-size: 1rem;
+            font-size: 0.9rem;
             background: var(--surface);
-            padding: 6px 16px;
+            padding: 4px 12px;
             border-radius: 20px;
-            box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+            box-shadow: var(--shadow);
         }
         .theme-toggle {
             background: none;
             border: none;
-            font-size: 2rem;
+            font-size: 1.8rem;
             cursor: pointer;
             transition: transform 0.4s ease;
-            line-height: 1;
         }
         .theme-toggle[data-theme="dark"]:hover { transform: rotate(12deg); }
-        .theme-toggle[data-theme="dark"] { transform: rotate(0deg); }
         .theme-toggle[data-theme="light"]:hover { transform: scale(1.2); }
-        .theme-toggle[data-theme="light"] { transform: scale(1); }
         .settings-btn {
             background: none;
             border: none;
             color: var(--text);
-            font-size: 2rem;
+            font-size: 1.8rem;
             cursor: pointer;
             transition: transform 0.4s ease-out;
         }
@@ -95,35 +97,26 @@
             align-items: center;
             gap: 8px;
             background: var(--surface);
-            padding: 6px 15px;
+            padding: 6px 12px;
             border-radius: 30px;
+            box-shadow: var(--shadow);
         }
         .user-badge img {
-            width: 32px; height: 32px;
+            width: 30px; height: 30px;
             border-radius: 50%;
             border: 2px solid var(--accent);
         }
         .main-container {
-            display: grid;
-            grid-template-columns: 240px 1fr 320px;
-            gap: 30px;
             width: 100%;
-            max-width: 1400px;
-            align-items: start;
+            max-width: 500px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
         }
         body.spinning .main-container {
             filter: blur(6px);
             pointer-events: none;
         }
-        .leaderboard {
-            background: var(--surface);
-            border-radius: 20px;
-            padding: 20px;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.5);
-        }
-        .leaderboard h2 { text-align: center; margin-bottom: 15px; font-size: 1.4rem; color: var(--accent); }
-        .leaderboard ol { list-style: none; padding: 0; }
-        .leaderboard li { padding: 10px 8px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; }
         .wheel-wrapper {
             display: flex;
             flex-direction: column;
@@ -131,12 +124,13 @@
         }
         .wheel-container {
             position: relative;
-            width: 500px;
-            height: 500px;
+            width: 100%;
+            max-width: 400px;
+            aspect-ratio: 1 / 1;
             transition: transform 0.4s;
         }
         body.spinning .wheel-container {
-            transform: scale(1.4);
+            transform: scale(1.35);
             z-index: 100;
         }
         canvas#wheelCanvas {
@@ -146,13 +140,14 @@
         }
         .pin {
             position: absolute;
-            top: -30px;
+            top: -15px;
             left: 50%;
             transform: translateX(-50%);
-            width: 28px;
-            height: 36px;
+            width: 24px;
+            height: 30px;
             z-index: 10;
             filter: drop-shadow(0 4px 6px rgba(0,0,0,0.5));
+            transition: transform 0.1s;
         }
         .pin svg { width: 100%; height: 100%; fill: var(--accent); }
         .pin.bump {
@@ -160,13 +155,13 @@
         }
         @keyframes pinBump {
             0% { transform: translateX(-50%) translateY(0); }
-            50% { transform: translateX(-50%) translateY(8px); }
+            50% { transform: translateX(-50%) translateY(6px); }
             100% { transform: translateX(-50%) translateY(0); }
         }
         .spin-btn {
-            margin-top: 30px;
-            padding: 14px 50px;
-            font-size: 1.3rem;
+            margin-top: 20px;
+            padding: 14px 40px;
+            font-size: 1.2rem;
             font-weight: 700;
             background: var(--accent);
             color: white;
@@ -184,40 +179,175 @@
         }
         .options-panel {
             background: var(--surface);
-            border-radius: 20px;
+            border-radius: var(--radius);
             padding: 20px;
+            box-shadow: var(--shadow);
         }
-        .chance-toggle { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; }
+        .chance-toggle {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 20px;
+        }
+        .toggle-label { font-size: 1rem; font-weight: 500; }
         .switch { position: relative; width: 54px; height: 28px; }
         .switch input { display: none; }
-        .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: var(--accent); border-radius: 28px; transition: 0.3s; }
-        .slider:before { position: absolute; content: ""; height: 22px; width: 22px; left: 3px; bottom: 3px; background-color: white; border-radius: 50%; transition: 0.3s; }
+        .slider {
+            position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0;
+            background-color: var(--accent); border-radius: 28px; transition: 0.3s;
+        }
+        .slider:before {
+            position: absolute; content: ""; height: 22px; width: 22px;
+            left: 3px; bottom: 3px; background-color: white; border-radius: 50%; transition: 0.3s;
+        }
         input:checked + .slider { background-color: #4caf50; }
         input:checked + .slider:before { transform: translateX(26px); }
-        .option-row { display: flex; align-items: center; gap: 8px; margin-bottom: 12px; }
-        .option-row input[type="text"] { flex: 1; padding: 10px; border-radius: 10px; border: none; background: var(--input-bg); color: var(--text); }
-        .weight-input { width: 60px; padding: 10px; border-radius: 10px; border: none; background: var(--input-bg); color: #f5c518; text-align: center; }
-        .delete-option { background: var(--accent); border: none; color: white; width: 30px; height: 30px; border-radius: 50%; cursor: pointer; font-size: 1.3rem; }
-        .add-btn { width: 100%; padding: 12px; border: 2px dashed var(--accent); background: transparent; color: var(--accent); font-size: 2rem; border-radius: 14px; cursor: pointer; margin-top: 8px; }
-        .result-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.75); display: flex; justify-content: center; align-items: center; z-index: 300; opacity: 0; pointer-events: none; transition: 0.3s; }
+        .option-row {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 12px;
+        }
+        .option-row input[type="text"] {
+            flex: 1;
+            padding: 10px 14px;
+            border-radius: 10px;
+            border: none;
+            background: var(--input-bg);
+            color: var(--text);
+            font-size: 0.95rem;
+        }
+        .weight-input {
+            width: 60px;
+            padding: 10px 6px;
+            border-radius: 10px;
+            border: none;
+            background: var(--input-bg);
+            color: #f5c518;
+            text-align: center;
+            font-weight: 600;
+        }
+        .delete-option {
+            background: var(--accent);
+            border: none;
+            color: white;
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 1.3rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: transform 0.2s;
+        }
+        .delete-option:hover { transform: scale(1.15); }
+        .add-btn {
+            width: 100%;
+            padding: 12px;
+            border: 2px dashed var(--accent);
+            background: transparent;
+            color: var(--accent);
+            font-size: 2rem;
+            border-radius: 14px;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin-top: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .add-btn:hover {
+            background: rgba(233,69,96,0.1);
+            transform: scale(1.03);
+            border-style: solid;
+        }
+
+        /* Топ игроков — горизонтальная прокрутка */
+        .leaderboard {
+            background: var(--surface);
+            border-radius: var(--radius);
+            padding: 15px;
+            box-shadow: var(--shadow);
+        }
+        .leaderboard h2 {
+            text-align: center;
+            margin-bottom: 10px;
+            font-size: 1.2rem;
+            color: var(--accent);
+        }
+        .top-scroll {
+            display: flex;
+            gap: 15px;
+            overflow-x: auto;
+            padding: 10px 0;
+        }
+        .top-player {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 5px;
+            min-width: 70px;
+        }
+        .top-player img {
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            border: 2px solid var(--accent);
+            background: var(--input-bg);
+        }
+        .top-player .name {
+            font-size: 0.85rem;
+            font-weight: 600;
+            text-align: center;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            max-width: 70px;
+        }
+        .top-player .spins {
+            font-size: 0.75rem;
+            color: var(--accent);
+            font-weight: 600;
+        }
+
+        .result-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.75); display: flex; justify-content: center; align-items: center;
+            z-index: 300; opacity: 0; pointer-events: none; transition: 0.3s;
+        }
         .result-overlay.active { opacity: 1; pointer-events: auto; }
-        .result-content { background: var(--surface); padding: 40px 60px; border-radius: 30px; text-align: center; transform: scale(0.8); transition: 0.3s; }
+        .result-content {
+            background: var(--surface); padding: 40px 40px; border-radius: 30px;
+            text-align: center; transform: scale(0.8); transition: 0.3s;
+        }
         .result-overlay.active .result-content { transform: scale(1); }
-        .result-text { font-size: 3rem; font-weight: 700; color: var(--accent); }
-        .modal { display: flex; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); justify-content: center; align-items: center; z-index: 200; opacity: 0; pointer-events: none; transition: 0.25s; }
+        .result-text { font-size: 2.5rem; font-weight: 700; color: var(--accent); }
+        .modal {
+            display: flex; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.7); justify-content: center; align-items: center;
+            z-index: 200; opacity: 0; pointer-events: none; transition: 0.25s;
+        }
         .modal.active { opacity: 1; pointer-events: auto; }
-        .modal-content { background: var(--surface); padding: 30px; border-radius: 24px; width: 380px; transform: scale(0.9); transition: 0.25s; }
+        .modal-content {
+            background: var(--surface); padding: 30px; border-radius: 24px;
+            width: 90%; max-width: 380px; transform: scale(0.9); transition: 0.25s;
+        }
         .modal.active .modal-content { transform: scale(1); }
-        .modal-content h2 { margin-bottom: 20px; }
-        .modal-content input[type="text"], .modal-content input[type="range"] { width: 100%; padding: 10px; margin-bottom: 18px; border-radius: 10px; border: none; background: var(--input-bg); color: var(--text); }
-        .modal-content button { padding: 10px 24px; border: none; border-radius: 30px; background: var(--accent); color: white; font-weight: 600; margin-right: 10px; }
+        .modal-content h2 { margin-bottom: 20px; font-size: 1.5rem; }
+        .modal-content input[type="text"], .modal-content input[type="range"] {
+            width: 100%; padding: 10px; margin-bottom: 18px; border-radius: 10px;
+            border: none; background: var(--input-bg); color: var(--text);
+        }
+        .modal-content button {
+            padding: 10px 24px; border: none; border-radius: 30px;
+            background: var(--accent); color: white; font-weight: 600; margin-right: 10px; transition: 0.2s;
+        }
         .volume-row { display: flex; align-items: center; gap: 12px; }
-        @media (max-width: 1000px) {
-            .main-container { grid-template-columns: 1fr; max-width: 500px; }
-            .leaderboard { order: 2; }
-            .wheel-wrapper { order: 1; }
-            .options-panel { order: 3; }
-            .top-bar { flex-direction: column; }
+        .volume-row input[type="range"] { flex: 1; }
+
+        @media (min-width: 500px) {
+            .wheel-container { max-width: 450px; }
         }
     </style>
 </head>
@@ -234,14 +364,11 @@
             <button class="settings-btn" id="openSettings">⚙️</button>
         </div>
     </div>
+
     <div class="main-container">
-        <div class="leaderboard">
-            <h2>🏆 Топ игроков</h2>
-            <ol id="top-list"><li>Нет данных</li></ol>
-        </div>
         <div class="wheel-wrapper">
             <div class="wheel-container" id="wheelContainer">
-                <canvas id="wheelCanvas" width="500" height="500"></canvas>
+                <canvas id="wheelCanvas" width="400" height="400"></canvas>
                 <div class="pin" id="pin">
                     <svg viewBox="0 0 28 36">
                         <path d="M14 36 C22 24 28 14 28 10 C28 4.5 21.7 0 14 0 C6.3 0 0 4.5 0 10 C0 14 6 24 14 36Z" />
@@ -252,6 +379,7 @@
             </div>
             <button class="spin-btn" id="spinButton" disabled>🎡 Крутить!</button>
         </div>
+
         <div class="options-panel">
             <div class="chance-toggle">
                 <span class="toggle-label">🎲 Шансы</span>
@@ -263,13 +391,22 @@
             <div id="optionsList"></div>
             <button class="add-btn" id="addOptionBtn">+</button>
         </div>
+
+        <div class="leaderboard">
+            <h2>🏆 Топ игроков</h2>
+            <div class="top-scroll" id="topListContainer">
+                <div class="top-player">Загрузка...</div>
+            </div>
+        </div>
     </div>
+
     <div class="result-overlay" id="resultOverlay">
         <div class="result-content">
             <span class="result-text" id="resultText"></span>
             <p style="margin-top:20px; color: var(--muted-text);">Нажмите Esc или кликните, чтобы закрыть</p>
         </div>
     </div>
+
     <div class="modal" id="settingsModal">
         <div class="modal-content">
             <h2>⚙️ Настройки</h2>
@@ -293,7 +430,7 @@
     const tg = window.Telegram.WebApp;
     tg.ready();
 
-    // Firebase (безопасная инициализация)
+    // Firebase (ваши ключи)
     let db = null;
     try {
         const firebaseConfig = {
@@ -310,7 +447,6 @@
         console.log('Firebase ready');
     } catch (e) {
         console.warn('No Firebase:', e);
-        document.querySelector('.leaderboard h2').textContent = '🏆 Топ (офлайн)';
     }
 
     let currentUserTelegramId = null;
@@ -343,7 +479,10 @@
                 }
                 db.ref('users/' + currentUserTelegramId).on('value', snap => {
                     const data = snap.val();
-                    if (data) document.getElementById('userNickDisplay').textContent = data.nickname || data.firstName;
+                    if (data) {
+                        document.getElementById('userNickDisplay').textContent = data.nickname || data.firstName;
+                        if (data.photoUrl) document.getElementById('userAvatar').src = data.photoUrl;
+                    }
                 });
                 loadLeaderboard();
             }).catch(err => console.warn(err));
@@ -353,21 +492,37 @@
     function loadLeaderboard() {
         if (!db) return;
         db.ref('users').orderByChild('spins').limitToLast(10).on('value', snap => {
-            const topList = document.getElementById('top-list');
-            topList.innerHTML = '';
-            if (!snap.exists()) { topList.innerHTML = '<li>Нет данных</li>'; return; }
+            const container = document.getElementById('topListContainer');
+            container.innerHTML = '';
+            if (!snap.exists()) {
+                container.innerHTML = '<div class="top-player">Нет данных</div>';
+                return;
+            }
             const users = [];
             snap.forEach(child => users.push({ id: child.key, ...child.val() }));
             users.sort((a, b) => b.spins - a.spins);
-            users.forEach((u, i) => {
-                const li = document.createElement('li');
-                li.innerHTML = `<span class="nick">${i+1}. ${u.nickname || u.firstName}</span> <span class="spins">${u.spins}</span>`;
-                topList.appendChild(li);
+            users.forEach(u => {
+                const div = document.createElement('div');
+                div.className = 'top-player';
+                const img = document.createElement('img');
+                img.src = u.photoUrl || 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32"%3E%3Ccircle cx="16" cy="16" r="16" fill="%23e94560"/%3E%3C/svg%3E';
+                img.alt = u.nickname || u.firstName;
+                img.onerror = function() { this.src = 'data:image/svg+xml,...'; }; // fallback
+                const name = document.createElement('span');
+                name.className = 'name';
+                name.textContent = u.nickname || u.firstName;
+                const spins = document.createElement('span');
+                spins.className = 'spins';
+                spins.textContent = '🔄 ' + (u.spins || 0);
+                div.appendChild(img);
+                div.appendChild(name);
+                div.appendChild(spins);
+                container.appendChild(div);
             });
         });
     }
 
-    // ----- КОЛЕСО ФОРТУНЫ (чистый canvas) -----
+    // ----- КОЛЕСО ФОРТУНЫ -----
     const canvas = document.getElementById('wheelCanvas');
     const ctx = canvas.getContext('2d');
     const spinBtn = document.getElementById('spinButton');
@@ -375,63 +530,116 @@
     let options = [];            // { label, weight }
     let useWeights = false;
     let isSpinning = false;
-    let currentAngle = 0;       // текущий угол поворота (в радианах)
-    let spinVelocity = 0;       // скорость вращения (рад/сек)
-    let spinDecay = 0.98;       // замедление
+    let currentAngle = 0;
+    let spinVelocity = 0;
+    let spinDecay = 0.98;
     let animationFrameId = null;
-    const idleColors = ['#e94560','#0f3460','#f5c518','#16213e','#53d8a0','#a45ee9','#ff6b6b','#4ecdc4'];
+    const baseColors = ['#e94560','#0f3460','#f5c518','#16213e','#53d8a0','#a45ee9','#ff6b6b','#4ecdc4'];
+    const MIN_SEGMENTS = 8;
+
+    function sectorGradient(x, y, r, startAngle, endAngle, baseColor) {
+        const grad = ctx.createLinearGradient(
+            x + r * Math.cos(startAngle + (endAngle-startAngle)/2),
+            y + r * Math.sin(startAngle + (endAngle-startAngle)/2),
+            x + r * 0.2 * Math.cos(startAngle + (endAngle-startAngle)/2),
+            y + r * 0.2 * Math.sin(startAngle + (endAngle-startAngle)/2)
+        );
+        grad.addColorStop(0, baseColor);
+        grad.addColorStop(1, '#ffffff30');
+        return grad;
+    }
 
     function drawWheel() {
         ctx.clearRect(0, 0, canvas.width, canvas.height);
-        const segments = options.length > 0 ? options : [{ label: '', weight: 1 }, { label: '', weight: 1 }];
-        const totalWeight = segments.reduce((sum, s) => sum + (useWeights ? s.weight : 1), 0);
-        let startAngle = currentAngle;
         const centerX = canvas.width / 2;
         const centerY = canvas.height / 2;
-        const radius = Math.min(centerX, centerY) - 10;
+        const radius = Math.min(centerX, centerY) - 20;
 
+        let numSegments = options.length;
+        if (numSegments < 2) {
+            numSegments = MIN_SEGMENTS;
+        } else {
+            numSegments = Math.max(numSegments, 2);
+        }
+
+        const sliceAngle = (2 * Math.PI) / numSegments;
+        const segments = [];
+        for (let i = 0; i < numSegments; i++) {
+            if (i < options.length) {
+                segments.push({ label: options[i].label || '?', weight: useWeights ? options[i].weight : 1 });
+            } else {
+                segments.push({ label: '?', weight: 1, empty: true });
+            }
+        }
+
+        let startAngle = currentAngle;
+        const step = sliceAngle;
         segments.forEach((seg, i) => {
-            const sliceAngle = (2 * Math.PI) * (useWeights ? seg.weight : 1) / totalWeight;
-            const endAngle = startAngle + sliceAngle;
-            // Рисуем сектор
+            const endAngle = startAngle + step;
             ctx.beginPath();
             ctx.moveTo(centerX, centerY);
             ctx.arc(centerX, centerY, radius, startAngle, endAngle);
             ctx.closePath();
-            ctx.fillStyle = idleColors[i % idleColors.length];
+            const baseColor = seg.empty ? '#2a2a3a' : baseColors[i % baseColors.length];
+            ctx.fillStyle = sectorGradient(centerX, centerY, radius, startAngle, endAngle, baseColor);
             ctx.fill();
-            ctx.strokeStyle = '#fff';
-            ctx.lineWidth = 2;
+            ctx.strokeStyle = '#ffffff33';
+            ctx.lineWidth = 1;
             ctx.stroke();
-            // Текст
+
             ctx.save();
             ctx.translate(centerX, centerY);
-            ctx.rotate(startAngle + sliceAngle / 2);
+            ctx.rotate(startAngle + step / 2);
             ctx.textAlign = "center";
-            ctx.fillStyle = "#fff";
-            ctx.font = "bold 16px Segoe UI";
+            ctx.fillStyle = "#ffffff";
+            ctx.font = "bold 16px 'Segoe UI'";
+            ctx.shadowColor = '#00000080';
+            ctx.shadowBlur = 4;
             ctx.fillText(seg.label, radius * 0.7, 6);
+            ctx.shadowColor = 'transparent';
+            ctx.shadowBlur = 0;
             ctx.restore();
+
             startAngle = endAngle;
         });
-        // Внешнее кольцо
+
+        // Стоп-палочки
+        const pegRadius = 6;
+        const pegDistance = radius + 4;
+        ctx.fillStyle = '#ffffff';
+        ctx.strokeStyle = '#aaaaaa';
+        for (let i = 0; i < numSegments; i++) {
+            const angle = currentAngle + i * step + step / 2;
+            const pegX = centerX + pegDistance * Math.cos(angle);
+            const pegY = centerY + pegDistance * Math.sin(angle);
+            ctx.beginPath();
+            ctx.arc(pegX, pegY, pegRadius, 0, 2 * Math.PI);
+            ctx.fill();
+            ctx.stroke();
+        }
+
+        // Центральная втулка
         ctx.beginPath();
-        ctx.arc(centerX, centerY, radius, 0, 2 * Math.PI);
-        ctx.strokeStyle = '#fff';
-        ctx.lineWidth = 4;
+        ctx.arc(centerX, centerY, 20, 0, 2*Math.PI);
+        ctx.fillStyle = '#ffffff';
+        ctx.fill();
+        ctx.strokeStyle = '#aaaaaa';
+        ctx.lineWidth = 2;
         ctx.stroke();
     }
 
     function idleSpin() {
         if (options.length === 0) {
-            // Пустое колесо (просто вращаемся медленно)
             currentAngle += 0.02;
             drawWheel();
             animationFrameId = requestAnimationFrame(idleSpin);
-            spinBtn.disabled = true;
-        } else {
-            spinBtn.disabled = options.length < 2;
         }
+        updateSpinButtonState();
+    }
+
+    function updateSpinButtonState() {
+        const filled = options.filter(opt => opt.label.trim() !== '');
+        spinBtn.disabled = (filled.length < 2);
     }
 
     function spinAnimation() {
@@ -439,29 +647,37 @@
         spinVelocity *= spinDecay;
         currentAngle += spinVelocity;
         drawWheel();
-        // Щелчки каждые ~ 30° (имитация стопора)
-        const degrees = currentAngle * (180 / Math.PI);
-        if (Math.floor(degrees / 30) !== Math.floor((currentAngle - spinVelocity) * (180 / Math.PI) / 30)) {
+
+        const numSegments = options.length >= 2 ? options.length : MIN_SEGMENTS;
+        const degPerSegment = 360 / numSegments;
+        const currentDeg = currentAngle * (180 / Math.PI);
+        const prevDeg = (currentAngle - spinVelocity) * (180 / Math.PI);
+        if (Math.floor(currentDeg / degPerSegment) !== Math.floor(prevDeg / degPerSegment)) {
             bumpPin();
             playTickSound();
         }
+
         if (Math.abs(spinVelocity) < 0.01) {
-            // Остановка
             isSpinning = false;
             document.body.classList.remove('spinning');
-            spinBtn.disabled = options.length < 2;
-            // Определяем выигрышный сектор
+            updateSpinButtonState();
+
             let result = '?';
             if (options.length > 0) {
-                const segAngle = 2 * Math.PI / options.length;
-                // Приводим угол к положительному и находим индекс
+                const segAngle = 2 * Math.PI / numSegments;
                 let rawAngle = ((currentAngle % (2 * Math.PI)) + 2 * Math.PI) % (2 * Math.PI);
-                const index = Math.floor(rawAngle / segAngle) % options.length;
-                result = options[index].label || 'Пусто';
+                const index = Math.floor(rawAngle / segAngle) % numSegments;
+                if (index < options.length) {
+                    result = options[index].label || 'Пусто';
+                } else {
+                    result = 'Пустой сектор';
+                }
             }
+
             const overlay = document.getElementById('resultOverlay');
             document.getElementById('resultText').textContent = '🎉 ' + result;
             overlay.classList.add('active');
+
             if (db && options.length >= 2 && currentUserTelegramId) {
                 db.ref('users/' + currentUserTelegramId).transaction(user => {
                     if (user) user.spins = (user.spins || 0) + 1;
@@ -474,10 +690,10 @@
     }
 
     function startSpin() {
-        if (isSpinning || options.length < 2) return;
+        const filled = options.filter(opt => opt.label.trim() !== '');
+        if (isSpinning || filled.length < 2) return;
         isSpinning = true;
         document.body.classList.add('spinning');
-        // Случайная начальная скорость
         spinVelocity = 0.5 + Math.random() * 0.8;
         if (animationFrameId) cancelAnimationFrame(animationFrameId);
         animationFrameId = requestAnimationFrame(spinAnimation);
@@ -507,7 +723,11 @@
             const row = document.createElement('div'); row.className = 'option-row';
             const input = document.createElement('input'); input.type = 'text'; input.value = opt.label;
             input.placeholder = 'Вариант ' + (idx + 1);
-            input.addEventListener('input', e => { options[idx].label = e.target.value; drawWheel(); });
+            input.addEventListener('input', e => {
+                options[idx].label = e.target.value;
+                drawWheel();
+                updateSpinButtonState();
+            });
             row.appendChild(input);
             if (useWeights) {
                 const winp = document.createElement('input'); winp.type = 'number'; winp.className = 'weight-input'; winp.value = opt.weight; winp.min = 1;
@@ -515,24 +735,27 @@
                 row.appendChild(winp);
             }
             const del = document.createElement('button'); del.className = 'delete-option'; del.innerHTML = '×';
-            del.addEventListener('click', () => { options.splice(idx, 1); renderOptions(); drawWheel(); });
+            del.addEventListener('click', () => {
+                options.splice(idx, 1);
+                renderOptions();
+                drawWheel();
+                updateSpinButtonState();
+            });
             row.appendChild(del);
             optionsListDiv.appendChild(row);
         });
-        if (options.length === 0) {
-            if (!animationFrameId) idleSpin();
-        }
+        if (options.length === 0 && !idleAnimationId) idleSpin();
+        updateSpinButtonState();
+        drawWheel();
     }
     document.getElementById('addOptionBtn').addEventListener('click', () => {
         options.push({ label: '', weight: 1 });
         renderOptions();
-        drawWheel();
     });
     chanceSwitch.addEventListener('change', e => {
         useWeights = e.target.checked;
         if (!useWeights) options.forEach(o => o.weight = 1);
         renderOptions();
-        drawWheel();
     });
     spinBtn.addEventListener('click', startSpin);
 
@@ -602,7 +825,7 @@
             renderOptions();
         }
         drawWheel();
-        if (!isSpinning) idleSpin(); // медленное вращение, пока нет вариантов
+        if (!isSpinning) idleSpin();
         if (localStorage.getItem('volume')) globalVolume = parseInt(localStorage.getItem('volume')) / 100;
         if (localStorage.getItem('muted') === '1') muted = true;
     });
