@@ -186,6 +186,12 @@
             display: flex;
             align-items: center;
             justify-content: space-between;
+            margin-bottom: 12px;
+        }
+        .fast-spin-toggle {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
             margin-bottom: 20px;
         }
         .toggle-label { font-size: 1rem; font-weight: 500; }
@@ -241,22 +247,27 @@
             transition: transform 0.2s;
         }
         .delete-option:hover { transform: scale(1.15); }
-        .add-btn {
-            width: 100%;
-            padding: 12px;
+        .options-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 10px;
+        }
+        .add-btn, .presets-btn {
+            flex: 1;
+            padding: 12px 8px;
             border: 2px dashed var(--accent);
             background: transparent;
             color: var(--accent);
-            font-size: 2rem;
+            font-size: 1.2rem;
             border-radius: 14px;
             cursor: pointer;
             transition: all 0.3s;
-            margin-top: 8px;
             display: flex;
             align-items: center;
             justify-content: center;
+            gap: 6px;
         }
-        .add-btn:hover {
+        .add-btn:hover, .presets-btn:hover {
             background: rgba(233,69,96,0.1);
             transform: scale(1.03);
             border-style: solid;
@@ -319,7 +330,6 @@
             border-radius: 14px;
             transition: background 0.2s;
         }
-        .top-player:hover { background: rgba(255,255,255,0.05); }
         .position {
             width: 24px;
             text-align: center;
@@ -355,7 +365,7 @@
             cursor: pointer;
         }
 
-        /* Размытие только фона при вращении */
+        /* Размытие фона при вращении */
         body.spinning .top-bar,
         body.spinning .options-panel,
         body.spinning .leaderboard {
@@ -400,6 +410,7 @@
         .modal-content {
             background: var(--surface); padding: 30px; border-radius: 24px;
             width: 90%; max-width: 380px; transform: scale(0.9); transition: 0.25s;
+            color: var(--text);
         }
         .modal.active .modal-content { transform: scale(1); }
         .modal-content h2 { margin-bottom: 20px; font-size: 1.5rem; }
@@ -413,6 +424,33 @@
         }
         .volume-row { display: flex; align-items: center; gap: 12px; }
         .volume-row input[type="range"] { flex: 1; }
+        .presets-list {
+            list-style: none;
+            margin: 10px 0;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+        .presets-list li {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 12px;
+            background: var(--input-bg);
+            border-radius: 12px;
+            margin-bottom: 8px;
+        }
+        .presets-list li span {
+            font-weight: 500;
+        }
+        .presets-list li button {
+            background: var(--accent);
+            border: none;
+            color: white;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            cursor: pointer;
+        }
 
         @media (min-width: 500px) {
             .wheel-container { max-width: 450px; }
@@ -456,8 +494,18 @@
                     <span class="slider"></span>
                 </label>
             </div>
+            <div class="fast-spin-toggle">
+                <span class="toggle-label">⚡ Быстрый спин</span>
+                <label class="switch">
+                    <input type="checkbox" id="fastSpinSwitch">
+                    <span class="slider"></span>
+                </label>
+            </div>
             <div id="optionsList"></div>
-            <button class="add-btn" id="addOptionBtn">+</button>
+            <div class="options-actions">
+                <button class="add-btn" id="addOptionBtn">+</button>
+                <button class="presets-btn" id="presetsBtn">📋</button>
+            </div>
         </div>
 
         <div class="leaderboard">
@@ -481,6 +529,20 @@
         </div>
     </div>
 
+    <!-- Модальное окно пресетов -->
+    <div class="modal" id="presetsModal">
+        <div class="modal-content">
+            <h2>📋 Пресеты вариантов</h2>
+            <div style="display: flex; gap: 8px; margin-bottom: 15px;">
+                <input type="text" id="presetNameInput" placeholder="Название пресета" style="flex:1; padding:10px; border-radius:10px; border:none; background:var(--input-bg); color:var(--text);">
+                <button id="savePresetBtn">💾 Сохранить</button>
+            </div>
+            <ul class="presets-list" id="presetsList"></ul>
+            <button id="closePresetsModal" style="margin-top:10px;">Закрыть</button>
+        </div>
+    </div>
+
+    <!-- Модальное окно настроек -->
     <div class="modal" id="settingsModal">
         <div class="modal-content">
             <h2>⚙️ Настройки</h2>
@@ -527,7 +589,7 @@
     let currentUserData = null;
     let allUsersData = [];
     let friendIds = new Set();
-    let currentTab = 'world'; // 'world' или 'friends'
+    let currentTab = 'world';
 
     const initData = tg.initDataUnsafe;
     if (initData && initData.user) {
@@ -569,7 +631,6 @@
         }
     }
 
-    // Загрузка всех пользователей для лидерборда
     function loadAllUsers() {
         if (!db) return;
         db.ref('users').orderByChild('spins').limitToLast(50).on('value', snap => {
@@ -582,7 +643,6 @@
         });
     }
 
-    // Получение контактов Telegram
     function fetchContacts(callback) {
         if (typeof tg.getContacts === 'function') {
             tg.getContacts((contacts) => {
@@ -595,16 +655,13 @@
                 }
             });
         } else {
-            // Попытка запросить контакт (один) – не будем, просто сообщаем о недоступности
             callback(false);
         }
     }
 
-    // Рендеринг лидерборда в зависимости от активной вкладки
     function renderLeaderboard() {
         const container = document.getElementById('topListContainer');
         container.innerHTML = '';
-
         if (currentTab === 'world') {
             renderWorldTab(container);
         } else {
@@ -632,7 +689,6 @@
                 </div>`;
             return;
         }
-
         const friends = allUsersData.filter(u => friendIds.has(u.telegramId));
         if (friends.length === 0) {
             container.innerHTML = '<div class="contact-prompt">Ваши друзья ещё не играли</div>';
@@ -670,7 +726,6 @@
         return div;
     }
 
-    // Запрос контактов при нажатии кнопки
     window.requestContacts = function() {
         fetchContacts((success) => {
             if (success) {
@@ -682,7 +737,6 @@
         });
     };
 
-    // Переключение вкладок
     const tabSwitch = document.getElementById('tabSwitch');
     const tabOptions = document.querySelectorAll('.tab-option');
     tabOptions.forEach(option => {
@@ -719,6 +773,7 @@
     const pinElement = document.getElementById('pin');
     let options = [];
     let useWeights = false;
+    let fastSpin = false;
     let isSpinning = false;
     let currentAngle = 0;
     let spinVelocity = 0;
@@ -762,7 +817,6 @@
                 ctx.lineWidth = 1;
                 ctx.stroke();
             }
-            // палочки
             const pegRadius = 6;
             const pegDistance = radius + 4;
             ctx.fillStyle = '#ffffff';
@@ -830,7 +884,6 @@
             });
         }
 
-        // Центральная втулка
         ctx.beginPath();
         ctx.arc(centerX, centerY, 20, 0, 2*Math.PI);
         ctx.fillStyle = '#ffffff';
@@ -931,7 +984,14 @@
         if (isSpinning || filled.length < 2) return;
         isSpinning = true;
         document.body.classList.add('spinning');
-        spinVelocity = 0.5 + Math.random() * 0.8;
+        // Учет быстрого спина
+        if (fastSpin) {
+            spinVelocity = 0.3 + Math.random() * 0.4;
+            spinDecay = 0.9;
+        } else {
+            spinVelocity = 0.5 + Math.random() * 0.8;
+            spinDecay = 0.98;
+        }
         if (animationFrameId) cancelAnimationFrame(animationFrameId);
         animationFrameId = requestAnimationFrame(spinAnimation);
     }
@@ -954,6 +1014,7 @@
     // Панель опций
     const optionsListDiv = document.getElementById('optionsList');
     const chanceSwitch = document.getElementById('chanceSwitch');
+    const fastSpinSwitch = document.getElementById('fastSpinSwitch');
     function renderOptions() {
         optionsListDiv.innerHTML = '';
         options.forEach((opt, idx) => {
@@ -994,7 +1055,73 @@
         if (!useWeights) options.forEach(o => o.weight = 1);
         renderOptions();
     });
+    fastSpinSwitch.addEventListener('change', e => {
+        fastSpin = e.target.checked;
+    });
     spinBtn.addEventListener('click', startSpin);
+
+    // Пресеты
+    const presetsModal = document.getElementById('presetsModal');
+    const presetsBtn = document.getElementById('presetsBtn');
+    const closePresetsModal = document.getElementById('closePresetsModal');
+    const savePresetBtn = document.getElementById('savePresetBtn');
+    const presetNameInput = document.getElementById('presetNameInput');
+    const presetsList = document.getElementById('presetsList');
+
+    function getPresets() {
+        const presets = localStorage.getItem('wheel_presets');
+        return presets ? JSON.parse(presets) : [];
+    }
+    function savePresets(presets) {
+        localStorage.setItem('wheel_presets', JSON.stringify(presets));
+    }
+    function renderPresetsList() {
+        const presets = getPresets();
+        presetsList.innerHTML = '';
+        presets.forEach((preset, idx) => {
+            const li = document.createElement('li');
+            const span = document.createElement('span');
+            span.textContent = preset.name;
+            li.appendChild(span);
+            const loadBtn = document.createElement('button');
+            loadBtn.textContent = 'Загрузить';
+            loadBtn.addEventListener('click', () => {
+                options = preset.options.map(o => ({...o}));
+                renderOptions();
+                presetsModal.classList.remove('active');
+            });
+            li.appendChild(loadBtn);
+            const delBtn = document.createElement('button');
+            delBtn.textContent = 'Удалить';
+            delBtn.style.marginLeft = '5px';
+            delBtn.addEventListener('click', () => {
+                const updated = getPresets().filter((_, i) => i !== idx);
+                savePresets(updated);
+                renderPresetsList();
+            });
+            li.appendChild(delBtn);
+            presetsList.appendChild(li);
+        });
+    }
+    presetsBtn.addEventListener('click', () => {
+        renderPresetsList();
+        presetsModal.classList.add('active');
+    });
+    closePresetsModal.addEventListener('click', () => {
+        presetsModal.classList.remove('active');
+    });
+    savePresetBtn.addEventListener('click', () => {
+        const name = presetNameInput.value.trim();
+        if (!name) return;
+        const presets = getPresets();
+        presets.push({
+            name: name,
+            options: options.map(o => ({ label: o.label, weight: o.weight }))
+        });
+        savePresets(presets);
+        presetNameInput.value = '';
+        renderPresetsList();
+    });
 
     document.getElementById('closeResultBtn').addEventListener('click', () => {
         document.getElementById('resultOverlay').classList.remove('active');
