@@ -618,7 +618,6 @@
             appId: "1:346933796337:web:75264443e0c3de75273850"
         };
         firebase.initializeApp(firebaseConfig);
-        firebase.storage = undefined;
         db = firebase.database();
         console.log('Firebase ready');
     } catch (e) {
@@ -999,7 +998,6 @@
                 }
                 if (result === '?') result = options[options.length - 1].label || 'Пусто';
             }
-
             document.getElementById('resultText').textContent = result;
             document.getElementById('resultOverlay').classList.add('active');
             playWinSound();
