@@ -53,12 +53,23 @@
             transition: filter 0.3s;
         }
         .slogan {
-            font-size: 1.4rem;
+            font-size: 1rem;           /* уменьшен */
             font-weight: 700;
-            letter-spacing: 1px;
             color: var(--accent);
-            flex: 1;
-            text-align: left;
+            white-space: nowrap;
+        }
+        .balance-block {
+            background: var(--surface);
+            border: 2px solid var(--accent);
+            color: var(--text);
+            font-weight: 700;
+            padding: 4px 12px;
+            font-size: 0.95rem;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            border-radius: 0;          /* ровный прямоугольник */
+            user-select: none;
         }
         .right-group {
             display: flex;
@@ -126,13 +137,14 @@
             text-align: center;
             padding: 10px 6px;
             font-weight: 600;
-            font-size: 0.95rem;
+            font-size: 1.5rem;        /* крупнее для эмодзи */
             color: var(--muted-text);
             cursor: pointer;
             border-radius: 10px;
             transition: all 0.3s;
             z-index: 1;
             user-select: none;
+            line-height: 1;
         }
         .mode-option.active {
             background: var(--accent);
@@ -156,7 +168,7 @@
             transform: scale(1.35);
             z-index: 100;
         }
-        canvas#wheelCanvas {
+        canvas {
             width: 100%;
             height: 100%;
             filter: drop-shadow(0 10px 20px rgba(0,0,0,0.6));
@@ -228,16 +240,6 @@
             background: var(--accent);
             color: white;
         }
-        .balance-row {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            font-weight: 600;
-        }
-        .balance-amount {
-            color: var(--accent);
-            font-size: 1.3rem;
-        }
 
         .options-panel {
             background: var(--surface);
@@ -275,15 +277,28 @@
             color: var(--text);
             font-size: 0.95rem;
         }
-        .weight-input {
+        .weight-wrapper {
+            position: relative;
             width: 60px;
-            padding: 10px 6px;
+        }
+        .weight-input {
+            width: 100%;
+            padding: 10px 24px 10px 6px;  /* место под значок % */
             border-radius: 10px;
             border: none;
             background: var(--input-bg);
             color: #f5c518;
             text-align: center;
             font-weight: 600;
+        }
+        .weight-suffix {
+            position: absolute;
+            right: 8px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #f5c518;
+            font-weight: 600;
+            pointer-events: none;
         }
         .delete-option {
             background: var(--accent);
@@ -418,7 +433,7 @@
             color: var(--text);
         }
         .modal.active .modal-content { transform: scale(1); }
-        .modal-content h2 { margin-bottom: 20px; font-size: 1.5rem; }
+        .modal-content h2 { margin-bottom: 20px; font-size: 1.5rem; text-align: center; }
         .modal-content textarea {
             width: 100%; height: 120px; padding: 10px; border-radius: 10px;
             border: none; background: var(--input-bg); color: var(--text); font-family: inherit;
@@ -426,7 +441,7 @@
         }
         .modal-content button {
             padding: 10px 24px; border: none; border-radius: 30px;
-            background: var(--accent); color: white; font-weight: 600; margin-right: 10px; transition: 0.2s;
+            background: var(--accent); color: white; font-weight: 600; margin: 0 auto; display: block; transition: 0.2s;
         }
         .volume-row { display: flex; align-items: center; gap: 12px; }
         .volume-row input[type="range"] { flex: 1; }
@@ -450,26 +465,25 @@
 </head>
 <body>
     <div class="top-bar">
-        <div class="slogan" id="slogan">✨ Удача ждёт тебя! (dev)</div>
+        <div class="slogan" id="slogan">✨ Удача ждёт тебя!</div>
+        <div class="balance-block" id="balanceBlock">
+            <span id="fortBalance">0</span> <span>F</span>
+        </div>
         <div class="right-group">
             <span id="localTime">00:00</span>
+            <button class="settings-btn" id="openSettings">⚙️</button>
             <button class="theme-toggle" id="themeToggle" data-theme="dark">🌙</button>
             <div class="user-badge" id="userBadge">
                 <img id="userAvatar" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ccircle cx='16' cy='16' r='16' fill='%23e94560'/%3E%3C/svg%3E" alt="avatar">
                 <span id="userNickDisplay"></span>
             </div>
-            <button class="settings-btn" id="openSettings">⚙️</button>
         </div>
     </div>
 
     <div class="main-container">
         <div class="mode-switch" id="modeSwitch">
-            <div class="mode-option active" data-mode="daily">🎲 Повседневное</div>
-            <div class="mode-option" data-mode="donate">💎 Донат</div>
-        </div>
-        <div id="donateBalance" style="display:none; justify-content: space-between; align-items: center; margin-bottom: 5px;">
-            <span class="balance-row">💰 Баланс: <span class="balance-amount" id="fortBalance">0</span> FORT</span>
-            <button id="buyFortBtn" style="background: var(--accent); color: white; border: none; padding: 6px 16px; border-radius: 20px; font-weight: 600;">+</button>
+            <div class="mode-option active" data-mode="daily">🎲</div>
+            <div class="mode-option" data-mode="donate">💎</div>
         </div>
 
         <div id="dailyContent">
@@ -519,10 +533,10 @@
                 </div>
                 <div class="bet-panel">
                     <div class="bet-amounts" id="betAmounts">
-                        <button class="bet-btn selected" data-bet="10">10 FORT</button>
-                        <button class="bet-btn" data-bet="50">50 FORT</button>
-                        <button class="bet-btn" data-bet="100">100 FORT</button>
-                        <button class="bet-btn" data-bet="500">500 FORT</button>
+                        <button class="bet-btn selected" data-bet="10">10 F</button>
+                        <button class="bet-btn" data-bet="50">50 F</button>
+                        <button class="bet-btn" data-bet="100">100 F</button>
+                        <button class="bet-btn" data-bet="500">500 F</button>
                     </div>
                     <button class="spin-btn" id="donateSpinBtn" disabled>💎 Испытать удачу</button>
                 </div>
@@ -555,12 +569,12 @@
             <h2>✍️ Массовое добавление</h2>
             <textarea id="massAddTextarea" placeholder="Пицца, Бургер, Салат..."></textarea>
             <button id="applyMassAdd">Добавить</button>
-            <button id="closeMassAddModal">Закрыть</button>
+            <button id="closeMassAddModal" style="margin-top:10px;">Закрыть</button>
         </div>
     </div>
     <div class="modal" id="presetsModal">
         <div class="modal-content">
-            <h2>📋 Пресеты вариантов</h2>
+            <h2>Ваши варианты</h2>
             <div style="display:flex; gap:8px; margin-bottom:15px;">
                 <input type="text" id="presetNameInput" placeholder="Название пресета" style="flex:1; padding:10px; border-radius:10px; border:none; background:var(--input-bg); color:var(--text);">
                 <button id="savePresetBtn">💾 Сохранить</button>
@@ -580,7 +594,7 @@
                 <span id="volumeValue">50%</span>
             </div>
             <label><input type="checkbox" id="muteCheckbox"> 🔇 Без звука</label>
-            <div style="margin-top:24px;">
+            <div style="margin-top:24px; text-align:center;">
                 <button id="saveSettings">💾 Сохранить</button>
                 <button id="closeSettings">✖ Закрыть</button>
             </div>
@@ -604,7 +618,7 @@
             appId: "1:346933796337:web:75264443e0c3de75273850"
         };
         firebase.initializeApp(firebaseConfig);
-        firebase.storage = undefined; // отключаем лишний сервис
+        firebase.storage = undefined;
         db = firebase.database();
         console.log('Firebase ready');
     } catch (e) {
@@ -620,7 +634,22 @@
     let selectedBet = 10;
     let dailyBonusUsed = false;
 
-    // Инициализация пользователя
+    // Донат-колесо (фиксированные сектора)
+    const donateSectors = [
+        { label: 'x2', weight: 12, color: '#f5c518' },
+        { label: 'x0', weight: 38, color: '#e94560' },
+        { label: 'x1', weight: 25, color: '#4caf50' },
+        { label: 'x0.5', weight: 20, color: '#ff9800' },
+        { label: 'Джекпот', weight: 3, color: '#9c27b0' },
+        { label: 'x3', weight: 1, color: '#2196f3' },
+        { label: 'Бесплатно', weight: 1, color: '#00bcd4' },
+    ];
+    let donateAngle = 0;
+    let donateVelocity = 0;
+    let donateDecay = 0.98;
+    let donateAnimationId = null;
+    let isDonateSpinning = false;
+
     const initData = tg.initDataUnsafe;
     if (initData && initData.user) {
         const user = initData.user;
@@ -648,7 +677,6 @@
                 } else {
                     userRef.update({ firstName, username, photoUrl });
                 }
-                // Слушаем изменения пользователя
                 db.ref('users/' + currentUserTelegramId).on('value', snap => {
                     const data = snap.val();
                     if (data) {
@@ -665,8 +693,11 @@
 
     function updateBalanceDisplay() {
         document.getElementById('fortBalance').textContent = fortBalance;
-        const donateSpinBtn = document.getElementById('donateSpinBtn');
-        donateSpinBtn.disabled = (fortBalance < selectedBet && dailyBonusUsed);
+        const donateBtn = document.getElementById('donateSpinBtn');
+        const lastBonusDate = localStorage.getItem('dailyBonusDate');
+        const today = new Date().toDateString();
+        dailyBonusUsed = (lastBonusDate === today);
+        donateBtn.disabled = (fortBalance < selectedBet && dailyBonusUsed);
     }
 
     // Переключение режимов
@@ -681,15 +712,24 @@
             opt.classList.add('active');
             document.getElementById('dailyContent').style.display = mode === 'daily' ? 'block' : 'none';
             document.getElementById('donateContent').style.display = mode === 'donate' ? 'block' : 'none';
-            document.getElementById('donateBalance').style.display = mode === 'donate' ? 'flex' : 'none';
             document.getElementById('optionsPanel').style.display = mode === 'daily' ? 'block' : 'none';
-            if (mode === 'donate') updateDonateWheel();
-            else drawWheel();
+            if (mode === 'donate') {
+                drawDonateWheel();
+                if (!isDonateSpinning && !donateAnimationId) {
+                    // запустим холостое вращение, если нет активной анимации
+                    donateAngle = 0;
+                    donateVelocity = 0;
+                    startDonateIdleSpin();
+                }
+            } else {
+                stopDonateAnimation();
+                drawWheel();
+            }
         });
     });
 
-    // Кнопка пополнения FORT
-    document.getElementById('buyFortBtn').addEventListener('click', () => {
+    // Кнопка пополнения FORT (убрана, теперь баланс в шапке; пополнение временно оставим через popup из donateBalance? Но donateBalance убран. Оставим вызов popup по клику на блок баланса)
+    document.getElementById('balanceBlock').addEventListener('click', () => {
         tg.showPopup({
             title: 'Пополнение FORT',
             message: 'Скоро вы сможете купить FORT за Telegram Stars или TON. А пока мы дарим 50 FORT для теста!',
@@ -705,7 +745,7 @@
         });
     });
 
-    // Выбор ставки в донат-колесе
+    // Ставка
     document.getElementById('betAmounts').addEventListener('click', (e) => {
         if (e.target.classList.contains('bet-btn')) {
             document.querySelectorAll('#betAmounts .bet-btn').forEach(b => b.classList.remove('selected'));
@@ -715,12 +755,14 @@
         }
     });
 
-    // Донат-спин (заглушка с результатом)
+    // Донат-спин
     document.getElementById('donateSpinBtn').addEventListener('click', () => {
         if (fortBalance < selectedBet && dailyBonusUsed) {
             tg.showAlert('Недостаточно FORT. Пополните баланс.');
             return;
         }
+        if (isDonateSpinning) return;
+
         const lastBonusDate = localStorage.getItem('dailyBonusDate');
         const today = new Date().toDateString();
         if (lastBonusDate !== today) dailyBonusUsed = false;
@@ -735,125 +777,146 @@
         if (db && currentUserTelegramId) {
             db.ref('users/' + currentUserTelegramId).update({ fart: fortBalance });
         }
-        // Симуляция вращения
-        const outcome = simulateDonateSpin();
-        fortBalance += outcome.win;
-        updateBalanceDisplay();
-        if (db && currentUserTelegramId) {
-            db.ref('users/' + currentUserTelegramId).update({ fart: fortBalance });
-        }
-        document.getElementById('resultTitle').textContent = '💎 Донат-колесо:';
-        document.getElementById('resultText').textContent = outcome.label + ' (' + (outcome.win >= 0 ? '+' : '') + outcome.win + ' FORT)';
-        document.getElementById('resultOverlay').classList.add('active');
+
+        // запуск вращения
+        stopDonateAnimation();
+        isDonateSpinning = true;
+        donateVelocity = 0.5 + Math.random() * 0.8;
+        donateDecay = 0.98;
+        document.body.classList.add('spinning');
+        donateAnimationId = requestAnimationFrame(donateSpinAnimation);
     });
 
-    function simulateDonateSpin() {
-        const sectors = [
-            { label: 'x2', win: selectedBet * 2, weight: 12 },
-            { label: 'x0', win: 0, weight: 38 },
-            { label: 'x1', win: selectedBet, weight: 25 },
-            { label: 'x0.5', win: Math.floor(selectedBet / 2), weight: 20 },
-            { label: 'Джекпот (x5)', win: selectedBet * 5, weight: 3 },
-            { label: 'x3', win: selectedBet * 3, weight: 1 },
-            { label: 'Бесплатный спин', win: selectedBet, weight: 1 } // возврат ставки
-        ];
-        const totalWeight = sectors.reduce((s, sec) => s + sec.weight, 0);
-        let rand = Math.random() * totalWeight;
-        for (const sec of sectors) {
-            if (rand < sec.weight) return sec;
-            rand -= sec.weight;
-        }
-        return sectors[0];
-    }
-
-    function updateDonateWheel() {
-        // Заглушка: донат-колесо пока не анимируется
-    }
-
-    // Загрузка всех пользователей для лидерборда
-    function loadAllUsers() {
-        if (!db) return;
-        db.ref('users').orderByChild('spins').limitToLast(50).on('value', snap => {
-            allUsersData = [];
-            if (snap.exists()) snap.forEach(child => allUsersData.push({ id: child.key, ...child.val() }));
-            allUsersData.sort((a, b) => b.spins - a.spins);
-            renderLeaderboard();
+    // ---- Донат-колесо: отрисовка и анимация ----
+    function drawDonateWheel() {
+        const canvas = document.getElementById('donateWheelCanvas');
+        const ctx = canvas.getContext('2d');
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        const centerX = canvas.width / 2;
+        const centerY = canvas.height / 2;
+        const radius = Math.min(centerX, centerY) - 20;
+        const totalWeight = donateSectors.reduce((s, sec) => s + sec.weight, 0);
+        let startAngle = donateAngle;
+        donateSectors.forEach(sec => {
+            const sliceAngle = (2 * Math.PI) * (sec.weight / totalWeight);
+            const endAngle = startAngle + sliceAngle;
+            ctx.beginPath();
+            ctx.moveTo(centerX, centerY);
+            ctx.arc(centerX, centerY, radius, startAngle, endAngle);
+            ctx.closePath();
+            ctx.fillStyle = sec.color;
+            ctx.fill();
+            ctx.strokeStyle = '#ffffff33';
+            ctx.lineWidth = 1;
+            ctx.stroke();
+            ctx.save();
+            ctx.translate(centerX, centerY);
+            ctx.rotate(startAngle + sliceAngle / 2);
+            ctx.fillStyle = '#fff';
+            ctx.font = 'bold 14px "Segoe UI"';
+            ctx.textAlign = 'center';
+            ctx.fillText(sec.label, radius * 0.7, 6);
+            ctx.restore();
+            startAngle = endAngle;
         });
-    }
-
-    function renderLeaderboard() {
-        const container = document.getElementById('topListContainer');
-        container.innerHTML = '';
-        if (currentTab === 'world') {
-            renderWorldTab(container);
-        } else {
-            renderFriendsTab(container);
-        }
-    }
-
-    function renderWorldTab(container) {
-        if (allUsersData.length === 0) {
-            container.innerHTML = '<div class="contact-prompt">Пока нет игроков</div>';
-            return;
-        }
-        allUsersData.slice(0, 10).forEach((u, i) => {
-            container.appendChild(createPlayerElement(u, i + 1));
+        // стоп-палочки
+        const pegRadius = 6;
+        const pegDistance = radius + 4;
+        ctx.fillStyle = '#ffffff';
+        ctx.strokeStyle = '#aaaaaa';
+        startAngle = donateAngle;
+        donateSectors.forEach(sec => {
+            const sliceAngle = (2 * Math.PI) * (sec.weight / totalWeight);
+            const pegAngle = startAngle + sliceAngle / 2;
+            const pegX = centerX + pegDistance * Math.cos(pegAngle);
+            const pegY = centerY + pegDistance * Math.sin(pegAngle);
+            ctx.beginPath();
+            ctx.arc(pegX, pegY, pegRadius, 0, 2 * Math.PI);
+            ctx.fill();
+            ctx.stroke();
+            startAngle += sliceAngle;
         });
+        // втулка
+        ctx.beginPath();
+        ctx.arc(centerX, centerY, 20, 0, 2*Math.PI);
+        ctx.fillStyle = '#ffffff';
+        ctx.fill();
+        ctx.strokeStyle = '#aaaaaa';
+        ctx.lineWidth = 2;
+        ctx.stroke();
     }
 
-    function renderFriendsTab(container) {
-        if (friendIds.size === 0) {
-            container.innerHTML = `<div class="contact-prompt">Чтобы увидеть друзей, разрешите доступ к контактам Telegram.<br><br><button onclick="requestContacts()">Разрешить доступ</button></div>`;
-            return;
+    function startDonateIdleSpin() {
+        function animate() {
+            if (isDonateSpinning) return;
+            donateAngle += 0.02;
+            drawDonateWheel();
+            donateAnimationId = requestAnimationFrame(animate);
         }
-        const friends = allUsersData.filter(u => friendIds.has(u.telegramId));
-        if (friends.length === 0) {
-            container.innerHTML = '<div class="contact-prompt">Ваши друзья ещё не играли</div>';
-            return;
+        donateAnimationId = requestAnimationFrame(animate);
+    }
+
+    function stopDonateAnimation() {
+        if (donateAnimationId) {
+            cancelAnimationFrame(donateAnimationId);
+            donateAnimationId = null;
         }
-        friends.slice(0, 10).forEach((u, i) => container.appendChild(createPlayerElement(u, i + 1)));
     }
 
-    function createPlayerElement(u, position) {
-        const div = document.createElement('div');
-        div.className = 'top-player';
-        div.innerHTML = `
-            <span class="position">${position}</span>
-            <img src="${u.photoUrl || 'data:image/svg+xml,%3Csvg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 32 32\"%3E%3Ccircle cx=\"16\" cy=\"16\" r=\"16\" fill=\"%23e94560\"/%3E%3C/svg%3E'}" alt="avatar">
-            <span class="player-name">${u.nickname || u.firstName}</span>
-            <span class="player-spins">🔄 ${u.spins || 0}</span>
-        `;
-        return div;
-    }
-
-    window.requestContacts = function() {
-        if (typeof tg.getContacts === 'function') {
-            tg.getContacts((contacts) => {
-                if (contacts) {
-                    friendIds.clear();
-                    contacts.forEach(c => friendIds.add(c.id.toString()));
-                    renderLeaderboard();
+    function donateSpinAnimation() {
+        if (!isDonateSpinning) return;
+        donateVelocity *= donateDecay;
+        donateAngle += donateVelocity;
+        drawDonateWheel();
+        // щелчки
+        const numSegments = donateSectors.length;
+        const degPerSegment = 360 / numSegments;
+        const curDeg = donateAngle * (180 / Math.PI);
+        const prevDeg = (donateAngle - donateVelocity) * (180 / Math.PI);
+        if (Math.floor(curDeg / degPerSegment) !== Math.floor(prevDeg / degPerSegment)) {
+            document.getElementById('donatePin').classList.add('bump');
+            setTimeout(() => document.getElementById('donatePin').classList.remove('bump'), 100);
+            playTickSound();
+        }
+        if (Math.abs(donateVelocity) < 0.01) {
+            isDonateSpinning = false;
+            document.body.classList.remove('spinning');
+            // определить результат
+            const totalWeight = donateSectors.reduce((s, sec) => s + sec.weight, 0);
+            let rawAngle = ((donateAngle % (2 * Math.PI)) + 2 * Math.PI) % (2 * Math.PI);
+            let accumulated = 0;
+            let resultSector = donateSectors[0];
+            for (const sec of donateSectors) {
+                const sliceAngle = (2 * Math.PI) * (sec.weight / totalWeight);
+                if (rawAngle >= accumulated && rawAngle < accumulated + sliceAngle) {
+                    resultSector = sec;
+                    break;
                 }
-            });
+                accumulated += sliceAngle;
+            }
+            let win = 0;
+            if (resultSector.label === 'x2') win = selectedBet * 2;
+            else if (resultSector.label === 'x3') win = selectedBet * 3;
+            else if (resultSector.label === 'x1') win = selectedBet;
+            else if (resultSector.label === 'x0.5') win = Math.floor(selectedBet / 2);
+            else if (resultSector.label === 'Бесплатно') win = selectedBet; // возврат
+            else if (resultSector.label === 'Джекпот') win = selectedBet * 5;
+            fortBalance += win;
+            updateBalanceDisplay();
+            if (db && currentUserTelegramId) {
+                db.ref('users/' + currentUserTelegramId).update({ fart: fortBalance });
+            }
+            document.getElementById('resultTitle').textContent = '💎 Донат-колесо:';
+            document.getElementById('resultText').textContent = resultSector.label + ' (' + (win >= 0 ? '+' : '') + win + ' F)';
+            document.getElementById('resultOverlay').classList.add('active');
+            // перезапуск холостого хода
+            startDonateIdleSpin();
+        } else {
+            donateAnimationId = requestAnimationFrame(donateSpinAnimation);
         }
-    };
+    }
 
-    // Переключение вкладок Мир/Друзья
-    const tabSwitch = document.getElementById('tabSwitch');
-    document.querySelectorAll('.tab-option').forEach(opt => {
-        opt.addEventListener('click', () => {
-            const tab = opt.dataset.tab;
-            if (tab === currentTab) return;
-            currentTab = tab;
-            document.querySelectorAll('.tab-option').forEach(o => o.classList.remove('active'));
-            opt.classList.add('active');
-            tabSwitch.classList.toggle('friends', tab === 'friends');
-            if (tab === 'friends' && friendIds.size === 0) requestContacts();
-            else renderLeaderboard();
-        });
-    });
-
-    // ========== ПОВСЕДНЕВНОЕ КОЛЕСО ==========
+    // Основное колесо (daily)
     const canvas = document.getElementById('wheelCanvas');
     const ctx = canvas.getContext('2d');
     const spinBtn = document.getElementById('spinButton');
@@ -886,7 +949,6 @@
         const centerX = canvas.width / 2;
         const centerY = canvas.height / 2;
         const radius = Math.min(centerX, centerY) - 20;
-
         if (options.length < 2) {
             const numSegments = MIN_SEGMENTS;
             const sliceAngle = (2 * Math.PI) / numSegments;
@@ -937,8 +999,8 @@
                 ctx.save();
                 ctx.translate(centerX, centerY);
                 ctx.rotate(startAngle + sliceAngle / 2);
-                ctx.textAlign = "center";
-                ctx.fillStyle = "#ffffff";
+                ctx.textAlign = 'center';
+                ctx.fillStyle = '#fff';
                 ctx.font = "bold 16px 'Segoe UI'";
                 ctx.fillText(opt.label || '?', radius * 0.7, 6);
                 ctx.restore();
@@ -964,7 +1026,7 @@
         }
         ctx.beginPath();
         ctx.arc(centerX, centerY, 20, 0, 2*Math.PI);
-        ctx.fillStyle = '#ffffff';
+        ctx.fillStyle = '#fff';
         ctx.fill();
         ctx.strokeStyle = '#aaaaaa';
         ctx.lineWidth = 2;
@@ -980,7 +1042,6 @@
         updateSpinButtonState();
     }
 
-    // НОВОЕ: все поля должны быть заполнены
     function updateSpinButtonState() {
         const allFilled = options.length >= 2 && options.every(opt => opt.label.trim() !== '');
         spinBtn.disabled = !allFilled;
@@ -1006,21 +1067,18 @@
         spinVelocity *= spinDecay;
         currentAngle += spinVelocity;
         drawWheel();
-
         const numSegments = options.length >= 2 ? options.length : MIN_SEGMENTS;
         const degPerSegment = 360 / numSegments;
-        const currentDeg = currentAngle * (180 / Math.PI);
+        const curDeg = currentAngle * (180 / Math.PI);
         const prevDeg = (currentAngle - spinVelocity) * (180 / Math.PI);
-        if (Math.floor(currentDeg / degPerSegment) !== Math.floor(prevDeg / degPerSegment)) {
+        if (Math.floor(curDeg / degPerSegment) !== Math.floor(prevDeg / degPerSegment)) {
             bumpPin();
             playTickSound();
         }
-
         if (Math.abs(spinVelocity) < 0.01) {
             isSpinning = false;
             document.body.classList.remove('spinning');
             updateSpinButtonState();
-
             let result = '?';
             if (options.length > 0) {
                 const totalWeight = options.reduce((sum, opt) => sum + (useWeights ? opt.weight : 1), 0);
@@ -1037,23 +1095,18 @@
                 }
                 if (result === '?') result = options[options.length - 1].label || 'Пусто';
             }
-
             document.getElementById('resultTitle').textContent = '🎉 Поздравляем, Ваш результат:';
             document.getElementById('resultText').textContent = result;
             document.getElementById('resultOverlay').classList.add('active');
             playWinSound();
-
             document.getElementById('shareResultBtn').onclick = () => {
                 const shareText = `🎉 Мне выпало: ${result}\nПопробуй и ты: @Fortunef3sBot`;
                 tg.openTelegramLink(`https://t.me/share/url?url=&text=${encodeURIComponent(shareText)}`);
             };
-
-            // ✅ ИСПРАВЛЕННОЕ СОХРАНЕНИЕ СПИНОВ
             if (db && options.length >= 2 && currentUserTelegramId) {
                 db.ref('users/' + currentUserTelegramId).update({
                     spins: firebase.database.ServerValue.increment(1)
-                }).then(() => console.log('✅ Спин записан'))
-                .catch(err => console.error('❌ Ошибка записи спина:', err));
+                }).catch(err => console.error('❌ Ошибка записи спина:', err));
             }
         } else {
             animationFrameId = requestAnimationFrame(spinAnimation);
@@ -1061,7 +1114,6 @@
     }
 
     function startSpin() {
-        // Кнопка уже неактивна, если не все поля заполнены, но дополнительная проверка не помешает
         if (isSpinning) return;
         isSpinning = true;
         document.body.classList.add('spinning');
@@ -1086,7 +1138,7 @@
         osc.start(); osc.stop(audioCtx.currentTime + 0.05);
     }
 
-    // Панель опций
+    // Панель опций (с символом %)
     const optionsListDiv = document.getElementById('optionsList');
     document.getElementById('chanceSwitch').addEventListener('change', e => {
         useWeights = e.target.checked;
@@ -1094,6 +1146,7 @@
         renderOptions();
     });
     document.getElementById('fastSpinSwitch').addEventListener('change', e => { fastSpin = e.target.checked; });
+
     function renderOptions() {
         optionsListDiv.innerHTML = '';
         options.forEach((opt, idx) => {
@@ -1103,9 +1156,20 @@
             input.addEventListener('input', e => { options[idx].label = e.target.value; drawWheel(); updateSpinButtonState(); });
             row.appendChild(input);
             if (useWeights) {
-                const wInput = document.createElement('input'); wInput.type = 'number'; wInput.className = 'weight-input'; wInput.value = opt.weight; wInput.min = 1;
+                const wrapper = document.createElement('div');
+                wrapper.className = 'weight-wrapper';
+                const wInput = document.createElement('input');
+                wInput.type = 'number';
+                wInput.className = 'weight-input';
+                wInput.value = opt.weight;
+                wInput.min = 1;
                 wInput.addEventListener('input', e => { options[idx].weight = parseInt(e.target.value) || 1; drawWheel(); });
-                row.appendChild(wInput);
+                const suffix = document.createElement('span');
+                suffix.className = 'weight-suffix';
+                suffix.textContent = '%';
+                wrapper.appendChild(wInput);
+                wrapper.appendChild(suffix);
+                row.appendChild(wrapper);
             }
             const del = document.createElement('button'); del.className = 'delete-option'; del.innerHTML = '×';
             del.addEventListener('click', () => { options.splice(idx, 1); renderOptions(); drawWheel(); updateSpinButtonState(); });
@@ -1116,6 +1180,7 @@
         updateSpinButtonState();
         drawWheel();
     }
+
     document.getElementById('addOptionBtn').addEventListener('click', () => { options.push({ label: '', weight: 1 }); renderOptions(); });
     document.getElementById('clearAllBtn').addEventListener('click', () => {
         if (options.length === 0) return;
@@ -1174,10 +1239,8 @@
         renderPresetsList();
     });
 
-    // Закрыть результат
     document.getElementById('closeResultBtn').addEventListener('click', () => document.getElementById('resultOverlay').classList.remove('active'));
 
-    // Звук
     let audioCtx = null, muted = false, globalVolume = 0.5;
     function initAudio() { if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)(); }
     document.body.addEventListener('click', initAudio, { once: true });
@@ -1217,7 +1280,6 @@
     });
     window.addEventListener('click', e => { if (e.target.classList.contains('modal')) e.target.classList.remove('active'); });
 
-    // Тема
     const themeToggle = document.getElementById('themeToggle');
     function setTheme(isLight) {
         document.body.classList.toggle('light-theme', isLight);
@@ -1243,6 +1305,7 @@
         }
         drawWheel();
         if (!isSpinning) idleSpin();
+        // для донат-колеса запустим холостой ход после переключения, но не сразу
         if (localStorage.getItem('volume')) globalVolume = parseInt(localStorage.getItem('volume')) / 100;
         if (localStorage.getItem('muted') === '1') muted = true;
     });
