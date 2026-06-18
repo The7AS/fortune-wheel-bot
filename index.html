@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>Колесо фортуны</title>
+    <title>Колесо фортуны (dev)</title>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
@@ -114,6 +114,31 @@
             flex-direction: column;
             gap: 20px;
         }
+        .mode-switch {
+            display: flex;
+            background: var(--input-bg);
+            border-radius: 14px;
+            padding: 6px;
+            margin-bottom: 10px;
+        }
+        .mode-option {
+            flex: 1;
+            text-align: center;
+            padding: 10px 6px;
+            font-weight: 600;
+            font-size: 0.95rem;
+            color: var(--muted-text);
+            cursor: pointer;
+            border-radius: 10px;
+            transition: all 0.3s;
+            z-index: 1;
+            user-select: none;
+        }
+        .mode-option.active {
+            background: var(--accent);
+            color: white;
+            box-shadow: 0 4px 12px rgba(233,69,96,0.4);
+        }
         .wheel-wrapper {
             display: flex;
             flex-direction: column;
@@ -148,9 +173,7 @@
             transition: transform 0.1s;
         }
         .pin svg { width: 100%; height: 100%; fill: var(--accent); }
-        .pin.bump {
-            animation: pinBump 0.1s ease;
-        }
+        .pin.bump { animation: pinBump 0.1s ease; }
         @keyframes pinBump {
             0% { transform: translateX(-50%) translateY(0); }
             50% { transform: translateX(-50%) translateY(6px); }
@@ -175,6 +198,47 @@
             cursor: not-allowed;
             box-shadow: 0 4px 10px rgba(0,0,0,0.3);
         }
+        .bet-panel {
+            background: var(--surface);
+            border-radius: var(--radius);
+            padding: 20px;
+            box-shadow: var(--shadow);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .bet-amounts {
+            display: flex;
+            gap: 10px;
+            margin: 15px 0;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+        .bet-btn {
+            padding: 10px 20px;
+            border-radius: 30px;
+            border: 2px solid var(--accent);
+            background: transparent;
+            color: var(--text);
+            font-weight: 600;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+        .bet-btn.selected {
+            background: var(--accent);
+            color: white;
+        }
+        .balance-row {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-weight: 600;
+        }
+        .balance-amount {
+            color: var(--accent);
+            font-size: 1.3rem;
+        }
+
         .options-panel {
             background: var(--surface);
             border-radius: var(--radius);
@@ -182,17 +246,11 @@
             box-shadow: var(--shadow);
             transition: filter 0.3s;
         }
-        .chance-toggle {
+        .chance-toggle, .fast-spin-toggle {
             display: flex;
             align-items: center;
             justify-content: space-between;
             margin-bottom: 12px;
-        }
-        .fast-spin-toggle {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            margin-bottom: 20px;
         }
         .toggle-label { font-size: 1rem; font-weight: 500; }
         .switch { position: relative; width: 54px; height: 28px; }
@@ -207,12 +265,7 @@
         }
         input:checked + .slider { background-color: #4caf50; }
         input:checked + .slider:before { transform: translateX(26px); }
-        .option-row {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            margin-bottom: 12px;
-        }
+        .option-row { display: flex; align-items: center; gap: 8px; margin-bottom: 12px; }
         .option-row input[type="text"] {
             flex: 1;
             padding: 10px 14px;
@@ -286,12 +339,8 @@
             transition: all 0.3s;
             background: rgba(233,69,96,0.05);
         }
-        .clear-btn:hover {
-            background: var(--accent);
-            color: white;
-        }
+        .clear-btn:hover { background: var(--accent); color: white; }
 
-        /* Лидерборд с вкладками */
         .leaderboard {
             background: var(--surface);
             border-radius: var(--radius);
@@ -319,9 +368,7 @@
             transition: color 0.3s;
             user-select: none;
         }
-        .tab-option.active {
-            color: var(--text);
-        }
+        .tab-option.active { color: var(--text); }
         .tab-background {
             position: absolute;
             top: 4px; bottom: 4px; left: 4px;
@@ -330,68 +377,20 @@
             border-radius: 10px;
             transition: transform 0.3s cubic-bezier(0.2, 0.8, 0.3, 1);
         }
-        .tab-switch.friends .tab-background {
-            transform: translateX(100%);
-        }
+        .tab-switch.friends .tab-background { transform: translateX(100%); }
 
-        .leaderboard-list {
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
-        }
+        .leaderboard-list { display: flex; flex-direction: column; gap: 8px; }
         .top-player {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            padding: 8px 10px;
-            background: var(--input-bg);
-            border-radius: 14px;
-            transition: background 0.2s;
+            display: flex; align-items: center; gap: 12px;
+            padding: 8px 10px; background: var(--input-bg); border-radius: 14px;
         }
-        .position {
-            width: 24px;
-            text-align: center;
-            font-weight: 700;
-            color: var(--accent);
-        }
+        .position { width: 24px; text-align: center; font-weight: 700; color: var(--accent); }
         .top-player img {
-            width: 36px; height: 36px;
-            border-radius: 50%;
-            border: 2px solid var(--accent);
+            width: 36px; height: 36px; border-radius: 50%; border: 2px solid var(--accent);
         }
-        .player-name {
-            flex: 1;
-            font-weight: 500;
-        }
-        .player-spins {
-            font-weight: 700;
-            color: var(--accent);
-        }
-        .contact-prompt {
-            text-align: center;
-            padding: 20px;
-            color: var(--muted-text);
-        }
-        .contact-prompt button {
-            margin-top: 10px;
-            background: var(--accent);
-            color: white;
-            border: none;
-            padding: 10px 24px;
-            border-radius: 30px;
-            font-weight: 600;
-            cursor: pointer;
-        }
+        .player-name { flex: 1; font-weight: 500; }
+        .player-spins { font-weight: 700; color: var(--accent); }
 
-        /* Размытие фона при вращении */
-        body.spinning .top-bar,
-        body.spinning .options-panel,
-        body.spinning .leaderboard {
-            filter: blur(6px);
-            pointer-events: none;
-        }
-
-        /* Результат */
         .result-overlay {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: rgba(0,0,0,0.75); display: flex; justify-content: center; align-items: center;
@@ -399,25 +398,13 @@
         }
         .result-overlay.active { opacity: 1; pointer-events: auto; }
         .result-content {
-            background: var(--surface); padding: 40px 40px; border-radius: 30px;
+            background: var(--surface); padding: 40px; border-radius: 30px;
             text-align: center; transform: scale(0.8); transition: 0.3s;
-            width: 90%;
-            max-width: 350px;
+            width: 90%; max-width: 350px;
         }
         .result-overlay.active .result-content { transform: scale(1); }
-        .result-text {
-            font-size: 2.5rem;
-            font-weight: 700;
-            color: var(--accent);
-            display: block;
-            margin: 15px 0 25px;
-        }
-        .result-buttons {
-            display: flex;
-            gap: 10px;
-            justify-content: center;
-            margin-top: 10px;
-        }
+        .result-text { font-size: 2.5rem; font-weight: 700; color: var(--accent); display: block; margin: 15px 0 25px; }
+        .result-buttons { display: flex; gap: 10px; justify-content: center; margin-top: 10px; }
 
         .modal {
             display: flex; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
@@ -433,16 +420,9 @@
         .modal.active .modal-content { transform: scale(1); }
         .modal-content h2 { margin-bottom: 20px; font-size: 1.5rem; }
         .modal-content textarea {
-            width: 100%;
-            height: 120px;
-            padding: 10px;
-            border-radius: 10px;
-            border: none;
-            background: var(--input-bg);
-            color: var(--text);
-            font-family: inherit;
-            margin-bottom: 15px;
-            resize: vertical;
+            width: 100%; height: 120px; padding: 10px; border-radius: 10px;
+            border: none; background: var(--input-bg); color: var(--text); font-family: inherit;
+            margin-bottom: 15px; resize: vertical;
         }
         .modal-content button {
             padding: 10px 24px; border: none; border-radius: 30px;
@@ -451,31 +431,16 @@
         .volume-row { display: flex; align-items: center; gap: 12px; }
         .volume-row input[type="range"] { flex: 1; }
         .presets-list {
-            list-style: none;
-            margin: 10px 0;
-            max-height: 200px;
-            overflow-y: auto;
+            list-style: none; margin: 10px 0; max-height: 200px; overflow-y: auto;
         }
         .presets-list li {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 10px 12px;
-            background: var(--input-bg);
-            border-radius: 12px;
-            margin-bottom: 8px;
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 10px 12px; background: var(--input-bg); border-radius: 12px; margin-bottom: 8px;
         }
-        .presets-list li span {
-            font-weight: 500;
-        }
+        .presets-list li span { font-weight: 500; }
         .presets-list li button {
-            background: var(--accent);
-            border: none;
-            color: white;
-            padding: 6px 12px;
-            border-radius: 20px;
-            font-size: 0.8rem;
-            cursor: pointer;
+            background: var(--accent); border: none; color: white;
+            padding: 6px 12px; border-radius: 20px; font-size: 0.8rem; cursor: pointer;
         }
 
         @media (min-width: 500px) {
@@ -485,7 +450,7 @@
 </head>
 <body>
     <div class="top-bar">
-        <div class="slogan" id="slogan">✨ Удача ждёт тебя!</div>
+        <div class="slogan" id="slogan">✨ Удача ждёт тебя! (dev)</div>
         <div class="right-group">
             <span id="localTime">00:00</span>
             <button class="theme-toggle" id="themeToggle" data-theme="dark">🌙</button>
@@ -498,42 +463,70 @@
     </div>
 
     <div class="main-container">
-        <div class="wheel-wrapper">
-            <div class="wheel-container" id="wheelContainer">
-                <canvas id="wheelCanvas" width="400" height="400"></canvas>
-                <div class="pin" id="pin">
-                    <svg viewBox="0 0 28 36">
-                        <path d="M14 36 C22 24 28 14 28 10 C28 4.5 21.7 0 14 0 C6.3 0 0 4.5 0 10 C0 14 6 24 14 36Z" />
-                        <circle cx="14" cy="12" r="4.5" fill="white" />
-                        <circle cx="14" cy="12" r="2" fill="#e0e0e0" />
-                    </svg>
-                </div>
-            </div>
-            <button class="spin-btn" id="spinButton" disabled>🎡 Крутить!</button>
+        <div class="mode-switch" id="modeSwitch">
+            <div class="mode-option active" data-mode="daily">🎲 Повседневное</div>
+            <div class="mode-option" data-mode="donate">💎 Донат</div>
+        </div>
+        <div id="donateBalance" style="display:none; justify-content: space-between; align-items: center; margin-bottom: 5px;">
+            <span class="balance-row">💰 Баланс: <span class="balance-amount" id="fortBalance">0</span> FORT</span>
+            <button id="buyFortBtn" style="background: var(--accent); color: white; border: none; padding: 6px 16px; border-radius: 20px; font-weight: 600;">+</button>
         </div>
 
-        <div class="options-panel">
-            <div class="chance-toggle">
-                <span class="toggle-label">🎲 Шансы</span>
-                <label class="switch">
-                    <input type="checkbox" id="chanceSwitch">
-                    <span class="slider"></span>
-                </label>
+        <div id="dailyContent">
+            <div class="wheel-wrapper">
+                <div class="wheel-container" id="wheelContainer">
+                    <canvas id="wheelCanvas" width="400" height="400"></canvas>
+                    <div class="pin" id="pin">
+                        <svg viewBox="0 0 28 36">
+                            <path d="M14 36 C22 24 28 14 28 10 C28 4.5 21.7 0 14 0 C6.3 0 0 4.5 0 10 C0 14 6 24 14 36Z" />
+                            <circle cx="14" cy="12" r="4.5" fill="white" />
+                            <circle cx="14" cy="12" r="2" fill="#e0e0e0" />
+                        </svg>
+                    </div>
+                </div>
+                <button class="spin-btn" id="spinButton" disabled>🎡 Крутить!</button>
             </div>
-            <div class="fast-spin-toggle">
-                <span class="toggle-label">⚡ Быстрый спин</span>
-                <label class="switch">
-                    <input type="checkbox" id="fastSpinSwitch">
-                    <span class="slider"></span>
-                </label>
+            <div class="options-panel" id="optionsPanel">
+                <div class="chance-toggle">
+                    <span class="toggle-label">🎲 Шансы</span>
+                    <label class="switch"><input type="checkbox" id="chanceSwitch"><span class="slider"></span></label>
+                </div>
+                <div class="fast-spin-toggle">
+                    <span class="toggle-label">⚡ Быстрый спин</span>
+                    <label class="switch"><input type="checkbox" id="fastSpinSwitch"><span class="slider"></span></label>
+                </div>
+                <div id="optionsList"></div>
+                <div class="options-actions">
+                    <button class="add-btn" id="addOptionBtn">+</button>
+                    <button class="mass-add-btn" id="massAddBtn">✍️</button>
+                    <button class="presets-btn" id="presetsBtn">📋</button>
+                </div>
+                <button class="clear-btn" id="clearAllBtn">🗑️ Очистить всё</button>
             </div>
-            <div id="optionsList"></div>
-            <div class="options-actions">
-                <button class="add-btn" id="addOptionBtn">+</button>
-                <button class="mass-add-btn" id="massAddBtn">✍️</button>
-                <button class="presets-btn" id="presetsBtn">📋</button>
+        </div>
+
+        <div id="donateContent" style="display:none;">
+            <div class="wheel-wrapper">
+                <div class="wheel-container" id="donateWheelContainer">
+                    <canvas id="donateWheelCanvas" width="400" height="400"></canvas>
+                    <div class="pin" id="donatePin">
+                        <svg viewBox="0 0 28 36">
+                            <path d="M14 36 C22 24 28 14 28 10 C28 4.5 21.7 0 14 0 C6.3 0 0 4.5 0 10 C0 14 6 24 14 36Z" />
+                            <circle cx="14" cy="12" r="4.5" fill="white" />
+                            <circle cx="14" cy="12" r="2" fill="#e0e0e0" />
+                        </svg>
+                    </div>
+                </div>
+                <div class="bet-panel">
+                    <div class="bet-amounts" id="betAmounts">
+                        <button class="bet-btn selected" data-bet="10">10 FORT</button>
+                        <button class="bet-btn" data-bet="50">50 FORT</button>
+                        <button class="bet-btn" data-bet="100">100 FORT</button>
+                        <button class="bet-btn" data-bet="500">500 FORT</button>
+                    </div>
+                    <button class="spin-btn" id="donateSpinBtn" disabled>💎 Испытать удачу</button>
+                </div>
             </div>
-            <button class="clear-btn" id="clearAllBtn">🗑️ Очистить всё</button>
         </div>
 
         <div class="leaderboard">
@@ -548,7 +541,7 @@
 
     <div class="result-overlay" id="resultOverlay">
         <div class="result-content">
-            <h2 style="margin-top:0;">🎉 Поздравляем, Ваш результат:</h2>
+            <h2 style="margin-top:0;" id="resultTitle">🎉 Поздравляем, Ваш результат:</h2>
             <span class="result-text" id="resultText"></span>
             <div class="result-buttons">
                 <button id="closeResultBtn" style="background: var(--accent); color: white; border: none; padding: 12px 30px; border-radius: 30px; font-size: 1rem; cursor: pointer;">Закрыть</button>
@@ -557,22 +550,18 @@
         </div>
     </div>
 
-    <!-- Модальное окно массового добавления -->
     <div class="modal" id="massAddModal">
         <div class="modal-content">
             <h2>✍️ Массовое добавление</h2>
-            <p style="margin-bottom: 8px;">Введите варианты через запятую или каждый с новой строки:</p>
             <textarea id="massAddTextarea" placeholder="Пицца, Бургер, Салат..."></textarea>
             <button id="applyMassAdd">Добавить</button>
             <button id="closeMassAddModal">Закрыть</button>
         </div>
     </div>
-
-    <!-- Модальное окно пресетов -->
     <div class="modal" id="presetsModal">
         <div class="modal-content">
             <h2>📋 Пресеты вариантов</h2>
-            <div style="display: flex; gap: 8px; margin-bottom: 15px;">
+            <div style="display:flex; gap:8px; margin-bottom:15px;">
                 <input type="text" id="presetNameInput" placeholder="Название пресета" style="flex:1; padding:10px; border-radius:10px; border:none; background:var(--input-bg); color:var(--text);">
                 <button id="savePresetBtn">💾 Сохранить</button>
             </div>
@@ -580,8 +569,6 @@
             <button id="closePresetsModal" style="margin-top:10px;">Закрыть</button>
         </div>
     </div>
-
-    <!-- Модальное окно настроек -->
     <div class="modal" id="settingsModal">
         <div class="modal-content">
             <h2>⚙️ Настройки</h2>
@@ -601,11 +588,10 @@
     </div>
 
 <script>
-    // Telegram Mini App
     const tg = window.Telegram.WebApp;
     tg.ready();
 
-    // Firebase (ваши ключи)
+    // Инициализация Firebase
     let db = null;
     try {
         const firebaseConfig = {
@@ -618,7 +604,7 @@
             appId: "1:346933796337:web:75264443e0c3de75273850"
         };
         firebase.initializeApp(firebaseConfig);
-        firebase.storage = undefined;
+        firebase.storage = undefined; // отключаем лишний сервис
         db = firebase.database();
         console.log('Firebase ready');
     } catch (e) {
@@ -626,11 +612,15 @@
     }
 
     let currentUserTelegramId = null;
-    let currentUserData = null;
     let allUsersData = [];
     let friendIds = new Set();
     let currentTab = 'world';
+    let currentMode = 'daily';
+    let fortBalance = 0;
+    let selectedBet = 10;
+    let dailyBonusUsed = false;
 
+    // Инициализация пользователя
     const initData = tg.initDataUnsafe;
     if (initData && initData.user) {
         const user = initData.user;
@@ -653,17 +643,19 @@
                         firstName, username, photoUrl,
                         nickname: firstName,
                         spins: 0,
-                        createdAt: firebase.database.ServerValue.TIMESTAMP
+                        fart: 0
                     });
                 } else {
                     userRef.update({ firstName, username, photoUrl });
                 }
+                // Слушаем изменения пользователя
                 db.ref('users/' + currentUserTelegramId).on('value', snap => {
                     const data = snap.val();
                     if (data) {
-                        currentUserData = data;
                         document.getElementById('userNickDisplay').textContent = data.nickname || data.firstName;
                         if (data.photoUrl) document.getElementById('userAvatar').src = data.photoUrl;
+                        fortBalance = data.fart || 0;
+                        updateBalanceDisplay();
                     }
                 });
                 loadAllUsers();
@@ -671,32 +663,122 @@
         }
     }
 
+    function updateBalanceDisplay() {
+        document.getElementById('fortBalance').textContent = fortBalance;
+        const donateSpinBtn = document.getElementById('donateSpinBtn');
+        donateSpinBtn.disabled = (fortBalance < selectedBet && dailyBonusUsed);
+    }
+
+    // Переключение режимов
+    const modeSwitch = document.getElementById('modeSwitch');
+    const modeOptions = document.querySelectorAll('.mode-option');
+    modeOptions.forEach(opt => {
+        opt.addEventListener('click', () => {
+            const mode = opt.dataset.mode;
+            if (mode === currentMode) return;
+            currentMode = mode;
+            modeOptions.forEach(o => o.classList.remove('active'));
+            opt.classList.add('active');
+            document.getElementById('dailyContent').style.display = mode === 'daily' ? 'block' : 'none';
+            document.getElementById('donateContent').style.display = mode === 'donate' ? 'block' : 'none';
+            document.getElementById('donateBalance').style.display = mode === 'donate' ? 'flex' : 'none';
+            document.getElementById('optionsPanel').style.display = mode === 'daily' ? 'block' : 'none';
+            if (mode === 'donate') updateDonateWheel();
+            else drawWheel();
+        });
+    });
+
+    // Кнопка пополнения FORT
+    document.getElementById('buyFortBtn').addEventListener('click', () => {
+        tg.showPopup({
+            title: 'Пополнение FORT',
+            message: 'Скоро вы сможете купить FORT за Telegram Stars или TON. А пока мы дарим 50 FORT для теста!',
+            buttons: [{ type: 'default', text: 'Получить 50 FORT' }, { type: 'cancel', text: 'Отмена' }]
+        }, (btnId) => {
+            if (btnId === '0') {
+                fortBalance += 50;
+                updateBalanceDisplay();
+                if (db && currentUserTelegramId) {
+                    db.ref('users/' + currentUserTelegramId).update({ fart: fortBalance });
+                }
+            }
+        });
+    });
+
+    // Выбор ставки в донат-колесе
+    document.getElementById('betAmounts').addEventListener('click', (e) => {
+        if (e.target.classList.contains('bet-btn')) {
+            document.querySelectorAll('#betAmounts .bet-btn').forEach(b => b.classList.remove('selected'));
+            e.target.classList.add('selected');
+            selectedBet = parseInt(e.target.dataset.bet);
+            updateBalanceDisplay();
+        }
+    });
+
+    // Донат-спин (заглушка с результатом)
+    document.getElementById('donateSpinBtn').addEventListener('click', () => {
+        if (fortBalance < selectedBet && dailyBonusUsed) {
+            tg.showAlert('Недостаточно FORT. Пополните баланс.');
+            return;
+        }
+        const lastBonusDate = localStorage.getItem('dailyBonusDate');
+        const today = new Date().toDateString();
+        if (lastBonusDate !== today) dailyBonusUsed = false;
+
+        if (!dailyBonusUsed && fortBalance < selectedBet) {
+            dailyBonusUsed = true;
+            localStorage.setItem('dailyBonusDate', today);
+        } else {
+            fortBalance -= selectedBet;
+        }
+        updateBalanceDisplay();
+        if (db && currentUserTelegramId) {
+            db.ref('users/' + currentUserTelegramId).update({ fart: fortBalance });
+        }
+        // Симуляция вращения
+        const outcome = simulateDonateSpin();
+        fortBalance += outcome.win;
+        updateBalanceDisplay();
+        if (db && currentUserTelegramId) {
+            db.ref('users/' + currentUserTelegramId).update({ fart: fortBalance });
+        }
+        document.getElementById('resultTitle').textContent = '💎 Донат-колесо:';
+        document.getElementById('resultText').textContent = outcome.label + ' (' + (outcome.win >= 0 ? '+' : '') + outcome.win + ' FORT)';
+        document.getElementById('resultOverlay').classList.add('active');
+    });
+
+    function simulateDonateSpin() {
+        const sectors = [
+            { label: 'x2', win: selectedBet * 2, weight: 12 },
+            { label: 'x0', win: 0, weight: 38 },
+            { label: 'x1', win: selectedBet, weight: 25 },
+            { label: 'x0.5', win: Math.floor(selectedBet / 2), weight: 20 },
+            { label: 'Джекпот (x5)', win: selectedBet * 5, weight: 3 },
+            { label: 'x3', win: selectedBet * 3, weight: 1 },
+            { label: 'Бесплатный спин', win: selectedBet, weight: 1 } // возврат ставки
+        ];
+        const totalWeight = sectors.reduce((s, sec) => s + sec.weight, 0);
+        let rand = Math.random() * totalWeight;
+        for (const sec of sectors) {
+            if (rand < sec.weight) return sec;
+            rand -= sec.weight;
+        }
+        return sectors[0];
+    }
+
+    function updateDonateWheel() {
+        // Заглушка: донат-колесо пока не анимируется
+    }
+
+    // Загрузка всех пользователей для лидерборда
     function loadAllUsers() {
         if (!db) return;
         db.ref('users').orderByChild('spins').limitToLast(50).on('value', snap => {
             allUsersData = [];
-            if (snap.exists()) {
-                snap.forEach(child => allUsersData.push({ id: child.key, ...child.val() }));
-            }
+            if (snap.exists()) snap.forEach(child => allUsersData.push({ id: child.key, ...child.val() }));
             allUsersData.sort((a, b) => b.spins - a.spins);
             renderLeaderboard();
         });
-    }
-
-    function fetchContacts(callback) {
-        if (typeof tg.getContacts === 'function') {
-            tg.getContacts((contacts) => {
-                if (contacts && Array.isArray(contacts)) {
-                    friendIds.clear();
-                    contacts.forEach(c => friendIds.add(c.id.toString()));
-                    callback(true);
-                } else {
-                    callback(false);
-                }
-            });
-        } else {
-            callback(false);
-        }
     }
 
     function renderLeaderboard() {
@@ -721,12 +803,7 @@
 
     function renderFriendsTab(container) {
         if (friendIds.size === 0) {
-            container.innerHTML = `
-                <div class="contact-prompt">
-                    Чтобы увидеть друзей, разрешите доступ к контактам Telegram.
-                    <br><br>
-                    <button onclick="requestContacts()">Разрешить доступ</button>
-                </div>`;
+            container.innerHTML = `<div class="contact-prompt">Чтобы увидеть друзей, разрешите доступ к контактам Telegram.<br><br><button onclick="requestContacts()">Разрешить доступ</button></div>`;
             return;
         }
         const friends = allUsersData.filter(u => friendIds.has(u.telegramId));
@@ -734,79 +811,49 @@
             container.innerHTML = '<div class="contact-prompt">Ваши друзья ещё не играли</div>';
             return;
         }
-        friends.slice(0, 10).forEach((u, i) => {
-            container.appendChild(createPlayerElement(u, i + 1));
-        });
+        friends.slice(0, 10).forEach((u, i) => container.appendChild(createPlayerElement(u, i + 1)));
     }
 
     function createPlayerElement(u, position) {
         const div = document.createElement('div');
         div.className = 'top-player';
-
-        const posSpan = document.createElement('span');
-        posSpan.className = 'position';
-        posSpan.textContent = position;
-        div.appendChild(posSpan);
-
-        const img = document.createElement('img');
-        img.src = u.photoUrl || 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32"%3E%3Ccircle cx="16" cy="16" r="16" fill="%23e94560"/%3E%3C/svg%3E';
-        img.alt = u.nickname || u.firstName;
-        div.appendChild(img);
-
-        const nameSpan = document.createElement('span');
-        nameSpan.className = 'player-name';
-        nameSpan.textContent = u.nickname || u.firstName;
-        div.appendChild(nameSpan);
-
-        const spinsSpan = document.createElement('span');
-        spinsSpan.className = 'player-spins';
-        spinsSpan.textContent = '🔄 ' + (u.spins || 0);
-        div.appendChild(spinsSpan);
-
+        div.innerHTML = `
+            <span class="position">${position}</span>
+            <img src="${u.photoUrl || 'data:image/svg+xml,%3Csvg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 32 32\"%3E%3Ccircle cx=\"16\" cy=\"16\" r=\"16\" fill=\"%23e94560\"/%3E%3C/svg%3E'}" alt="avatar">
+            <span class="player-name">${u.nickname || u.firstName}</span>
+            <span class="player-spins">🔄 ${u.spins || 0}</span>
+        `;
         return div;
     }
 
     window.requestContacts = function() {
-        fetchContacts((success) => {
-            if (success) {
-                renderLeaderboard();
-            } else {
-                const container = document.getElementById('topListContainer');
-                container.innerHTML = '<div class="contact-prompt">Не удалось получить контакты. Убедитесь, что вы дали разрешение в настройках Telegram.</div>';
-            }
-        });
-    };
-
-    const tabSwitch = document.getElementById('tabSwitch');
-    const tabOptions = document.querySelectorAll('.tab-option');
-    tabOptions.forEach(option => {
-        option.addEventListener('click', () => {
-            const tab = option.dataset.tab;
-            if (tab === currentTab) return;
-            currentTab = tab;
-            tabOptions.forEach(opt => opt.classList.remove('active'));
-            option.classList.add('active');
-            if (tab === 'friends') {
-                tabSwitch.classList.add('friends');
-                if (friendIds.size === 0) {
-                    fetchContacts((success) => {
-                        if (!success) {
-                            renderLeaderboard();
-                        } else {
-                            renderLeaderboard();
-                        }
-                    });
-                } else {
+        if (typeof tg.getContacts === 'function') {
+            tg.getContacts((contacts) => {
+                if (contacts) {
+                    friendIds.clear();
+                    contacts.forEach(c => friendIds.add(c.id.toString()));
                     renderLeaderboard();
                 }
-            } else {
-                tabSwitch.classList.remove('friends');
-                renderLeaderboard();
-            }
+            });
+        }
+    };
+
+    // Переключение вкладок Мир/Друзья
+    const tabSwitch = document.getElementById('tabSwitch');
+    document.querySelectorAll('.tab-option').forEach(opt => {
+        opt.addEventListener('click', () => {
+            const tab = opt.dataset.tab;
+            if (tab === currentTab) return;
+            currentTab = tab;
+            document.querySelectorAll('.tab-option').forEach(o => o.classList.remove('active'));
+            opt.classList.add('active');
+            tabSwitch.classList.toggle('friends', tab === 'friends');
+            if (tab === 'friends' && friendIds.size === 0) requestContacts();
+            else renderLeaderboard();
         });
     });
 
-    // ----- КОЛЕСО ФОРТУНЫ -----
+    // ========== ПОВСЕДНЕВНОЕ КОЛЕСО ==========
     const canvas = document.getElementById('wheelCanvas');
     const ctx = canvas.getContext('2d');
     const spinBtn = document.getElementById('spinButton');
@@ -857,7 +904,6 @@
                 ctx.lineWidth = 1;
                 ctx.stroke();
             }
-            // палочки
             const pegRadius = 6;
             const pegDistance = radius + 4;
             ctx.fillStyle = '#ffffff';
@@ -878,7 +924,6 @@
                 const weight = useWeights ? opt.weight : 1;
                 const sliceAngle = (2 * Math.PI) * (weight / totalWeight);
                 const endAngle = startAngle + sliceAngle;
-
                 ctx.beginPath();
                 ctx.moveTo(centerX, centerY);
                 ctx.arc(centerX, centerY, radius, startAngle, endAngle);
@@ -889,23 +934,16 @@
                 ctx.strokeStyle = '#ffffff33';
                 ctx.lineWidth = 1;
                 ctx.stroke();
-
                 ctx.save();
                 ctx.translate(centerX, centerY);
                 ctx.rotate(startAngle + sliceAngle / 2);
                 ctx.textAlign = "center";
                 ctx.fillStyle = "#ffffff";
                 ctx.font = "bold 16px 'Segoe UI'";
-                ctx.shadowColor = '#00000080';
-                ctx.shadowBlur = 4;
                 ctx.fillText(opt.label || '?', radius * 0.7, 6);
-                ctx.shadowColor = 'transparent';
-                ctx.shadowBlur = 0;
                 ctx.restore();
-
                 startAngle = endAngle;
             });
-
             const pegRadius = 6;
             const pegDistance = radius + 4;
             ctx.fillStyle = '#ffffff';
@@ -924,7 +962,6 @@
                 startAngle += sliceAngle;
             });
         }
-
         ctx.beginPath();
         ctx.arc(centerX, centerY, 20, 0, 2*Math.PI);
         ctx.fillStyle = '#ffffff';
@@ -943,9 +980,10 @@
         updateSpinButtonState();
     }
 
+    // НОВОЕ: все поля должны быть заполнены
     function updateSpinButtonState() {
-        const filled = options.filter(opt => opt.label.trim() !== '');
-        spinBtn.disabled = (filled.length < 2);
+        const allFilled = options.length >= 2 && options.every(opt => opt.label.trim() !== '');
+        spinBtn.disabled = !allFilled;
     }
 
     function playWinSound() {
@@ -1000,6 +1038,7 @@
                 if (result === '?') result = options[options.length - 1].label || 'Пусто';
             }
 
+            document.getElementById('resultTitle').textContent = '🎉 Поздравляем, Ваш результат:';
             document.getElementById('resultText').textContent = result;
             document.getElementById('resultOverlay').classList.add('active');
             playWinSound();
@@ -1009,11 +1048,12 @@
                 tg.openTelegramLink(`https://t.me/share/url?url=&text=${encodeURIComponent(shareText)}`);
             };
 
+            // ✅ ИСПРАВЛЕННОЕ СОХРАНЕНИЕ СПИНОВ
             if (db && options.length >= 2 && currentUserTelegramId) {
-                db.ref('users/' + currentUserTelegramId).transaction(user => {
-                    if (user) user.spins = (user.spins || 0) + 1;
-                    return user;
-                });
+                db.ref('users/' + currentUserTelegramId).update({
+                    spins: firebase.database.ServerValue.increment(1)
+                }).then(() => console.log('✅ Спин записан'))
+                .catch(err => console.error('❌ Ошибка записи спина:', err));
             }
         } else {
             animationFrameId = requestAnimationFrame(spinAnimation);
@@ -1021,17 +1061,12 @@
     }
 
     function startSpin() {
-        const filled = options.filter(opt => opt.label.trim() !== '');
-        if (isSpinning || filled.length < 2) return;
+        // Кнопка уже неактивна, если не все поля заполнены, но дополнительная проверка не помешает
+        if (isSpinning) return;
         isSpinning = true;
         document.body.classList.add('spinning');
-        if (fastSpin) {
-            spinVelocity = 0.3 + Math.random() * 0.4;
-            spinDecay = 0.9;
-        } else {
-            spinVelocity = 0.5 + Math.random() * 0.8;
-            spinDecay = 0.98;
-        }
+        spinVelocity = fastSpin ? 0.3 + Math.random() * 0.4 : 0.5 + Math.random() * 0.8;
+        spinDecay = fastSpin ? 0.9 : 0.98;
         if (animationFrameId) cancelAnimationFrame(animationFrameId);
         animationFrameId = requestAnimationFrame(spinAnimation);
     }
@@ -1053,54 +1088,35 @@
 
     // Панель опций
     const optionsListDiv = document.getElementById('optionsList');
-    const chanceSwitch = document.getElementById('chanceSwitch');
-    const fastSpinSwitch = document.getElementById('fastSpinSwitch');
+    document.getElementById('chanceSwitch').addEventListener('change', e => {
+        useWeights = e.target.checked;
+        if (!useWeights) options.forEach(o => o.weight = 1);
+        renderOptions();
+    });
+    document.getElementById('fastSpinSwitch').addEventListener('change', e => { fastSpin = e.target.checked; });
     function renderOptions() {
         optionsListDiv.innerHTML = '';
         options.forEach((opt, idx) => {
             const row = document.createElement('div'); row.className = 'option-row';
             const input = document.createElement('input'); input.type = 'text'; input.value = opt.label;
             input.placeholder = 'Вариант ' + (idx + 1);
-            input.addEventListener('input', e => {
-                options[idx].label = e.target.value;
-                drawWheel();
-                updateSpinButtonState();
-            });
+            input.addEventListener('input', e => { options[idx].label = e.target.value; drawWheel(); updateSpinButtonState(); });
             row.appendChild(input);
             if (useWeights) {
-                const winp = document.createElement('input'); winp.type = 'number'; winp.className = 'weight-input'; winp.value = opt.weight; winp.min = 1;
-                winp.addEventListener('input', e => { options[idx].weight = parseInt(e.target.value) || 1; drawWheel(); });
-                row.appendChild(winp);
+                const wInput = document.createElement('input'); wInput.type = 'number'; wInput.className = 'weight-input'; wInput.value = opt.weight; wInput.min = 1;
+                wInput.addEventListener('input', e => { options[idx].weight = parseInt(e.target.value) || 1; drawWheel(); });
+                row.appendChild(wInput);
             }
             const del = document.createElement('button'); del.className = 'delete-option'; del.innerHTML = '×';
-            del.addEventListener('click', () => {
-                options.splice(idx, 1);
-                renderOptions();
-                drawWheel();
-                updateSpinButtonState();
-            });
+            del.addEventListener('click', () => { options.splice(idx, 1); renderOptions(); drawWheel(); updateSpinButtonState(); });
             row.appendChild(del);
             optionsListDiv.appendChild(row);
         });
-        if (options.length === 0 && !idleAnimationId) idleSpin();
+        if (options.length === 0 && !animationFrameId) idleSpin();
         updateSpinButtonState();
         drawWheel();
     }
-    document.getElementById('addOptionBtn').addEventListener('click', () => {
-        options.push({ label: '', weight: 1 });
-        renderOptions();
-    });
-    chanceSwitch.addEventListener('change', e => {
-        useWeights = e.target.checked;
-        if (!useWeights) options.forEach(o => o.weight = 1);
-        renderOptions();
-    });
-    fastSpinSwitch.addEventListener('change', e => {
-        fastSpin = e.target.checked;
-    });
-    spinBtn.addEventListener('click', startSpin);
-
-    // Очистить всё
+    document.getElementById('addOptionBtn').addEventListener('click', () => { options.push({ label: '', weight: 1 }); renderOptions(); });
     document.getElementById('clearAllBtn').addEventListener('click', () => {
         if (options.length === 0) return;
         if (confirm('Вы уверены, что хотите удалить все варианты?')) {
@@ -1111,22 +1127,14 @@
 
     // Массовое добавление
     const massAddModal = document.getElementById('massAddModal');
-    document.getElementById('massAddBtn').addEventListener('click', () => {
-        massAddModal.classList.add('active');
-    });
-    document.getElementById('closeMassAddModal').addEventListener('click', () => {
-        massAddModal.classList.remove('active');
-    });
+    document.getElementById('massAddBtn').addEventListener('click', () => massAddModal.classList.add('active'));
+    document.getElementById('closeMassAddModal').addEventListener('click', () => massAddModal.classList.remove('active'));
     document.getElementById('applyMassAdd').addEventListener('click', () => {
         const text = document.getElementById('massAddTextarea').value.trim();
         if (!text) return;
-        // Разбиваем по запятым или переносам строк
-        const raw = text.split(/[,\n]+/);
-        raw.forEach(item => {
+        text.split(/[,\n]+/).forEach(item => {
             const trimmed = item.trim();
-            if (trimmed) {
-                options.push({ label: trimmed, weight: 1 });
-            }
+            if (trimmed) options.push({ label: trimmed, weight: 1 });
         });
         document.getElementById('massAddTextarea').value = '';
         massAddModal.classList.remove('active');
@@ -1135,72 +1143,39 @@
 
     // Пресеты
     const presetsModal = document.getElementById('presetsModal');
-    const presetsBtn = document.getElementById('presetsBtn');
-    const closePresetsModal = document.getElementById('closePresetsModal');
-    const savePresetBtn = document.getElementById('savePresetBtn');
-    const presetNameInput = document.getElementById('presetNameInput');
-    const presetsList = document.getElementById('presetsList');
-
-    function getPresets() {
-        const presets = localStorage.getItem('wheel_presets');
-        return presets ? JSON.parse(presets) : [];
-    }
-    function savePresets(presets) {
-        localStorage.setItem('wheel_presets', JSON.stringify(presets));
-    }
+    document.getElementById('presetsBtn').addEventListener('click', () => { renderPresetsList(); presetsModal.classList.add('active'); });
+    document.getElementById('closePresetsModal').addEventListener('click', () => presetsModal.classList.remove('active'));
+    function getPresets() { return JSON.parse(localStorage.getItem('wheel_presets') || '[]'); }
+    function savePresets(presets) { localStorage.setItem('wheel_presets', JSON.stringify(presets)); }
     function renderPresetsList() {
-        const presets = getPresets();
-        presetsList.innerHTML = '';
-        presets.forEach((preset, idx) => {
+        const list = document.getElementById('presetsList');
+        list.innerHTML = '';
+        getPresets().forEach((preset, idx) => {
             const li = document.createElement('li');
-            const span = document.createElement('span');
-            span.textContent = preset.name;
-            li.appendChild(span);
+            li.innerHTML = `<span>${preset.name}</span>`;
             const loadBtn = document.createElement('button');
             loadBtn.textContent = 'Загрузить';
-            loadBtn.addEventListener('click', () => {
-                options = preset.options.map(o => ({...o}));
-                renderOptions();
-                presetsModal.classList.remove('active');
-            });
+            loadBtn.onclick = () => { options = preset.options.map(o => ({...o})); renderOptions(); presetsModal.classList.remove('active'); };
             li.appendChild(loadBtn);
             const delBtn = document.createElement('button');
             delBtn.textContent = 'Удалить';
-            delBtn.style.marginLeft = '5px';
-            delBtn.addEventListener('click', () => {
-                if (confirm(`Удалить пресет "${preset.name}"?`)) {
-                    const updated = getPresets().filter((_, i) => i !== idx);
-                    savePresets(updated);
-                    renderPresetsList();
-                }
-            });
+            delBtn.onclick = () => { if (confirm(`Удалить пресет "${preset.name}"?`)) { const updated = getPresets().filter((_, i) => i !== idx); savePresets(updated); renderPresetsList(); } };
             li.appendChild(delBtn);
-            presetsList.appendChild(li);
+            list.appendChild(li);
         });
     }
-    presetsBtn.addEventListener('click', () => {
-        renderPresetsList();
-        presetsModal.classList.add('active');
-    });
-    closePresetsModal.addEventListener('click', () => {
-        presetsModal.classList.remove('active');
-    });
-    savePresetBtn.addEventListener('click', () => {
-        const name = presetNameInput.value.trim();
+    document.getElementById('savePresetBtn').addEventListener('click', () => {
+        const name = document.getElementById('presetNameInput').value.trim();
         if (!name) return;
         const presets = getPresets();
-        presets.push({
-            name: name,
-            options: options.map(o => ({ label: o.label, weight: o.weight }))
-        });
+        presets.push({ name, options: options.map(o => ({ label: o.label, weight: o.weight })) });
         savePresets(presets);
-        presetNameInput.value = '';
+        document.getElementById('presetNameInput').value = '';
         renderPresetsList();
     });
 
-    document.getElementById('closeResultBtn').addEventListener('click', () => {
-        document.getElementById('resultOverlay').classList.remove('active');
-    });
+    // Закрыть результат
+    document.getElementById('closeResultBtn').addEventListener('click', () => document.getElementById('resultOverlay').classList.remove('active'));
 
     // Звук
     let audioCtx = null, muted = false, globalVolume = 0.5;
@@ -1260,7 +1235,6 @@
     const slogans = ["Крути судьбу смелее!","Твой выбор — твоя удача!","Вращай и побеждай!","Сегодня твой день!","Фортуна улыбается смелым!","Поверни колесо к успеху!","Шанс на миллион!","Реши, что важнее!","Пусть удача крутится с тобой!","Колесо решит всё!","Удача ждёт тебя!"];
     document.getElementById('slogan').textContent = slogans[Math.floor(Math.random() * slogans.length)];
 
-    // Старт
     window.addEventListener('load', () => {
         if (options.length === 0) {
             options.push({ label: '', weight: 1 });
